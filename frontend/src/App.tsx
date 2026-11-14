@@ -10,6 +10,7 @@ import {
 import Sidebar from "./components/layout/Sidebar";
 import Overview from "./pages/Overview";
 import Participants from "./pages/Participants";
+import Cardiovascular from "./pages/Cardiovascular";
 
 function Placeholder({ title }: { title: string }) {
   return (
@@ -42,7 +43,7 @@ function AppLayout() {
 
           <Route
             path="/cardiovascular"
-            element={<Placeholder title="Cardiovascular Health" />}
+            element={<Cardiovascular />}
           />
 
           <Route
