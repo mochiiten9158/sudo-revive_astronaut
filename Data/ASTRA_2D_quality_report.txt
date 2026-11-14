@@ -1,0 +1,82 @@
+ASTRA 2D CARDIOVASCULAR DATA QUALITY REPORT
+=======================================================
+
+Rows: 184
+Columns: 33
+Participants: 37
+Duplicate record IDs: 0
+Duplicate participant/timepoint rows: 0
+Missing values across dataset: 38
+
+Treatment distribution:
+Treatment
+Control       55
+Exercise B    49
+Exercise A    40
+Flywheel      40
+
+Missingness by measurement:
+                                Column  Missing_Count  Missing_Percentage
+               Tricuspid Regurgitation             14            7.608696
+Color M-Mode Velocity Propagation Time              3            1.630435
+                  Tricuspid A Velocity              3            1.630435
+                  Tricuspid E Velocity              2            1.086957
+                  TDI Tricuspid E Wave              2            1.086957
+                  TDI Tricuspid A Wave              2            1.086957
+     Left Ventricular Diameter Systole              2            1.086957
+                  TDI Right Heart Rate              1            0.543478
+            TDI Mitral Annular Systole              1            0.543478
+                  TDI Mitral Annular E              1            0.543478
+                  TDI Mitral Annular A              1            0.543478
+          Pulmonic Valve Ejection Time              1            0.543478
+      Pulmonic Valve Acceleration Time              1            0.543478
+    Left Ventricular Diameter Diastole              1            0.543478
+                   TDI Left Heart Rate              1            0.543478
+           LVOT Velocity Time Integral              1            0.543478
+                 TDI Tricuspid Systole              1            0.543478
+                    TDI Basal Septal A              0            0.000000
+                    TDI Basal Septal E              0            0.000000
+              TDI Basal Septal Systole              0            0.000000
+                                    ID              0            0.000000
+                               Subject              0            0.000000
+               Aortic Valve Close Open              0            0.000000
+            Isovolumic Relaxation Time              0            0.000000
+                         Ejection Time              0            0.000000
+           Isovolumic Contraction Time              0            0.000000
+              Mitral Deceleration Time              0            0.000000
+                Mitral A Wave Velocity              0            0.000000
+                Mitral E Wave Velocity              0            0.000000
+                                   Day              0            0.000000
+                            Test_Phase              0            0.000000
+                             Treatment              0            0.000000
+                       Timepoint_order              0            0.000000
+
+Potential outliers:
+                           Measurement  Lower_IQR_Bound  Upper_IQR_Bound  Potential_Outliers
+    Left Ventricular Diameter Diastole          4.04250          6.06250                   3
+     Left Ventricular Diameter Systole          2.29875          4.00875                   4
+      Pulmonic Valve Acceleration Time         93.76000        193.40000                   3
+          Pulmonic Valve Ejection Time        252.76000        381.48000                   5
+                Mitral E Wave Velocity         22.37375        112.94375                   7
+                Mitral A Wave Velocity         15.51750         66.73750                   5
+              Mitral Deceleration Time         77.10500        322.02500                   4
+           Isovolumic Contraction Time          2.95875        104.76875                   7
+                         Ejection Time        234.27375        349.46375                   6
+            Isovolumic Relaxation Time         62.18750        117.90750                   6
+               Aortic Valve Close Open        336.58000        543.00000                   2
+                  Tricuspid E Velocity         19.88625         78.01625                   2
+                  Tricuspid A Velocity         10.96000         45.84000                   8
+               Tricuspid Regurgitation        163.33000        279.61000                  10
+                 TDI Tricuspid Systole          7.91500         16.15500                   6
+                  TDI Tricuspid E Wave          5.16625         18.11625                   1
+                  TDI Tricuspid A Wave          4.15625         16.98625                   4
+                  TDI Right Heart Rate         33.34750         91.40750                   6
+              TDI Basal Septal Systole          5.28125         10.71125                   4
+                    TDI Basal Septal E          4.17000         15.03000                   0
+                    TDI Basal Septal A          2.95125         11.74125                   7
+            TDI Mitral Annular Systole          4.58000         16.62000                   1
+                  TDI Mitral Annular E          6.27750         20.93750                   1
+                  TDI Mitral Annular A          2.11750         12.01750                   2
+                   TDI Left Heart Rate         33.81750         91.75750                   5
+Color M-Mode Velocity Propagation Time         19.69500         72.69500                   1
+           LVOT Velocity Time Integral          9.14750         31.96750                   1

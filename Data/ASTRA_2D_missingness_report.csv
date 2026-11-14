@@ -1,0 +1,34 @@
+Column,Missing_Count,Missing_Percentage
+Tricuspid Regurgitation,14,7.608695652173914
+Color M-Mode Velocity Propagation Time,3,1.6304347826086956
+Tricuspid A Velocity,3,1.6304347826086956
+Tricuspid E Velocity,2,1.0869565217391304
+TDI Tricuspid E Wave,2,1.0869565217391304
+TDI Tricuspid A Wave,2,1.0869565217391304
+Left Ventricular Diameter Systole,2,1.0869565217391304
+TDI Right Heart Rate,1,0.5434782608695652
+TDI Mitral Annular Systole,1,0.5434782608695652
+TDI Mitral Annular E,1,0.5434782608695652
+TDI Mitral Annular A,1,0.5434782608695652
+Pulmonic Valve Ejection Time,1,0.5434782608695652
+Pulmonic Valve Acceleration Time,1,0.5434782608695652
+Left Ventricular Diameter Diastole,1,0.5434782608695652
+TDI Left Heart Rate,1,0.5434782608695652
+LVOT Velocity Time Integral,1,0.5434782608695652
+TDI Tricuspid Systole,1,0.5434782608695652
+TDI Basal Septal A,0,0.0
+TDI Basal Septal E,0,0.0
+TDI Basal Septal Systole,0,0.0
+ID,0,0.0
+Subject,0,0.0
+Aortic Valve Close Open,0,0.0
+Isovolumic Relaxation Time,0,0.0
+Ejection Time,0,0.0
+Isovolumic Contraction Time,0,0.0
+Mitral Deceleration Time,0,0.0
+Mitral A Wave Velocity,0,0.0
+Mitral E Wave Velocity,0,0.0
+Day,0,0.0
+Test_Phase,0,0.0
+Treatment,0,0.0
+Timepoint_order,0,0.0
