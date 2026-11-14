@@ -1,0 +1,21 @@
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.env
+
+# Node
+node_modules/
+dist/
+
+# Generated files
+*.log
+.DS_Store
+
+# Local databases
+*.db
+*.sqlite3
+
+# Sensitive or restricted research data
+data/raw/*
