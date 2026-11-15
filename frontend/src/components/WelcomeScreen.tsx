@@ -5,124 +5,42 @@ import logo from "../assets/logo.png";
 import background from "../assets/background.jpg";
 import introMusic from "../assets/ObservingTheStar.ogg";
 
-import "./WelcomeScreen.css";
+import { usePreferences } from "../context/PreferencesContext";
 
-type Language = "en" | "ru" | "zh";
-type Theme = "dark" | "light";
-type VisionMode =
-  | "standard"
-  | "protanopia"
-  | "deuteranopia"
-  | "tritanopia";
+import "./WelcomeScreen.css";
 
 interface WelcomeScreenProps {
   loginContent: ReactNode;
 }
 
-const translations = {
-  en: {
-    subtitle: "Your health. Your mission.",
-    description: "Personal health monitoring for missions beyond Earth.",
-    enter: "ENTER ASTRA",
-    musicOn: "Play music",
-    musicOff: "Pause music",
-    settings: "Display & accessibility",
-    login: "Astronaut Login",
-    close: "Close",
-    theme: "Appearance",
-    dark: "Dark",
-    light: "Light",
-    vision: "Color vision",
-    standard: "Standard",
-    protanopia: "Protanopia",
-    deuteranopia: "Deuteranopia",
-    tritanopia: "Tritanopia",
-    largeText: "Large text",
-    highContrast: "High contrast",
-    reducedMotion: "Reduced motion",
-    credits: "sudo revive_astronaut team · NASA Space Apps Challenge",
-  },
-  ru: {
-    subtitle: "Ваше здоровье. Ваша миссия.",
-    description:
-      "Персональный мониторинг здоровья для миссий за пределами Земли.",
-    enter: "ВОЙТИ В ASTRA",
-    musicOn: "Включить музыку",
-    musicOff: "Выключить музыку",
-    settings: "Экран и доступность",
-    login: "Вход астронавта",
-    close: "Закрыть",
-    theme: "Оформление",
-    dark: "Тёмная",
-    light: "Светлая",
-    vision: "Цветовое зрение",
-    standard: "Стандартное",
-    protanopia: "Протанопия",
-    deuteranopia: "Дейтеранопия",
-    tritanopia: "Тританопия",
-    largeText: "Крупный текст",
-    highContrast: "Высокая контрастность",
-    reducedMotion: "Уменьшить анимацию",
-    credits: "Команда sudo_revive_astronaut · NASA Space Apps Challenge",
-  },
-  zh: {
-    subtitle: "您的健康，您的使命。",
-    description: "为地球以外的长期太空任务提供个人健康监测。",
-    enter: "进入 ASTRA",
-    musicOn: "播放音乐",
-    musicOff: "暂停音乐",
-    settings: "显示与无障碍设置",
-    login: "宇航员登录",
-    close: "关闭",
-    theme: "外观",
-    dark: "深色",
-    light: "浅色",
-    vision: "色觉模式",
-    standard: "标准",
-    protanopia: "红色盲",
-    deuteranopia: "绿色盲",
-    tritanopia: "蓝黄色盲",
-    largeText: "大字体",
-    highContrast: "高对比度",
-    reducedMotion: "减少动画",
-    credits: "sudo_revive_astronaut 团队 · NASA Space Apps Challenge",
-  },
-};
-
 export default function WelcomeScreen({
   loginContent,
 }: WelcomeScreenProps) {
-  const [language, setLanguage] = useState<Language>(
-    () => (localStorage.getItem("astra-language") as Language) || "en"
-  );
+  const {
+    language,
+    setLanguage,
+    theme,
+    setTheme,
+    textSize,
+    setTextSize,
+    vision,
+    setVision,
+    highContrast,
+    setHighContrast,
+    reducedMotion,
+    setReducedMotion,
+    enhancedFocus,
+    setEnhancedFocus,
+    t,
+  } = usePreferences();
 
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem("astra-theme") as Theme) || "dark"
-  );
-
-  const [vision, setVision] = useState<VisionMode>("standard");
-  const [largeText, setLargeText] = useState(false);
-  const [highContrast, setHighContrast] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [musicPlaying, setMusicPlaying] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement>(null);
-  const t = translations[language];
 
-  // Persist language and theme preferences.
-  useEffect(() => {
-    localStorage.setItem("astra-language", language);
-    localStorage.setItem("astra-theme", theme);
-  }, [language, theme]);
-
-  // Update document language.
-  useEffect(() => {
-    document.documentElement.lang = language;
-  }, [language]);
-
-  // Attempt automatic background music playback.
+  // Background music
   useEffect(() => {
     const audio = audioRef.current;
 
@@ -136,8 +54,6 @@ export default function WelcomeScreen({
         await audio.play();
         setMusicPlaying(true);
       } catch {
-        // Browser blocked autoplay.
-        // The user can start playback using the music button.
         setMusicPlaying(false);
       }
     };
@@ -149,7 +65,7 @@ export default function WelcomeScreen({
     };
   }, []);
 
-  // Close open panels and modal using Escape.
+  // Escape key closes panels
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -165,7 +81,6 @@ export default function WelcomeScreen({
     };
   }, []);
 
-  // Manual Play/Pause fallback.
   async function toggleMusic() {
     const audio = audioRef.current;
 
@@ -190,7 +105,7 @@ export default function WelcomeScreen({
         "astra-welcome",
         `theme-${theme}`,
         `vision-${vision}`,
-        largeText ? "large-text" : "",
+        textSize !== "standard" ? "large-text" : "",
         highContrast ? "high-contrast" : "",
         reducedMotion ? "reduced-motion" : "",
       ].join(" ")}
@@ -214,123 +129,157 @@ export default function WelcomeScreen({
             className="visually-hidden"
             htmlFor="astra-language"
           >
-            Language
+            {t("common.language")}
           </label>
 
           <select
             id="astra-language"
             value={language}
-            onChange={(e) =>
-              setLanguage(e.target.value as Language)
+            onChange={(event) =>
+              setLanguage(event.target.value as "en" | "ru" | "zh")
             }
-            aria-label="Select language"
+            aria-label={t("common.language")}
           >
             <option value="en">English</option>
             <option value="ru">Русский</option>
             <option value="zh">中文</option>
           </select>
-
-          <button
-            className="toolbar-button"
-            onClick={() =>
-              setTheme(theme === "dark" ? "light" : "dark")
-            }
-            aria-label="Toggle light and dark mode"
-          >
-            {theme === "dark" ? "☀ Light" : "☾ Dark"}
-          </button>
         </div>
 
         <button
           className="toolbar-button"
           onClick={() => setSettingsOpen(!settingsOpen)}
           aria-expanded={settingsOpen}
+          aria-controls="astra-accessibility-panel"
         >
-          ⚙ {t.settings}
+          ⚙ {t("accessibility.title")}
         </button>
       </header>
 
-      {/* Accessibility settings */}
+      {/* Global accessibility settings */}
       {settingsOpen && (
         <section
+          id="astra-accessibility-panel"
           className="accessibility-panel"
-          aria-label={t.settings}
+          aria-label={t("accessibility.title")}
         >
           <div className="panel-heading">
-            <h2>{t.settings}</h2>
+            <h2>{t("accessibility.title")}</h2>
 
             <button
               onClick={() => setSettingsOpen(false)}
-              aria-label={t.close}
+              aria-label={t("accessibility.close")}
             >
               ×
             </button>
           </div>
 
           <label>
-            {t.theme}
+            {t("accessibility.appearance")}
+
             <select
               value={theme}
-              onChange={(e) =>
-                setTheme(e.target.value as Theme)
+              onChange={(event) =>
+                setTheme(event.target.value as "dark" | "light")
               }
             >
-              <option value="dark">{t.dark}</option>
-              <option value="light">{t.light}</option>
+              <option value="dark">{t("accessibility.dark")}</option>
+              <option value="light">{t("accessibility.light")}</option>
             </select>
           </label>
 
           <label>
-            {t.vision}
+            {t("accessibility.textSize")}
+
             <select
-              value={vision}
-              onChange={(e) =>
-                setVision(e.target.value as VisionMode)
+              value={textSize}
+              onChange={(event) =>
+                setTextSize(
+                  event.target.value as
+                    | "standard"
+                    | "large"
+                    | "extra-large"
+                )
               }
             >
-              <option value="standard">{t.standard}</option>
-              <option value="protanopia">{t.protanopia}</option>
-              <option value="deuteranopia">{t.deuteranopia}</option>
-              <option value="tritanopia">{t.tritanopia}</option>
+              <option value="standard">
+                {t("accessibility.standard")}
+              </option>
+              <option value="large">
+                {t("accessibility.large")}
+              </option>
+              <option value="extra-large">
+                {t("accessibility.extraLarge")}
+              </option>
             </select>
           </label>
 
-          <label className="setting-checkbox">
-            <input
-              type="checkbox"
-              checked={largeText}
-              onChange={(e) =>
-                setLargeText(e.target.checked)
+          <label>
+            {t("accessibility.colorVision")}
+
+            <select
+              value={vision}
+              onChange={(event) =>
+                setVision(
+                  event.target.value as
+                    | "standard"
+                    | "protanopia"
+                    | "deuteranopia"
+                    | "tritanopia"
+                )
               }
-            />
-            {t.largeText}
+            >
+              <option value="standard">
+                {t("accessibility.standardVision")}
+              </option>
+              <option value="protanopia">
+                {t("accessibility.protanopia")}
+              </option>
+              <option value="deuteranopia">
+                {t("accessibility.deuteranopia")}
+              </option>
+              <option value="tritanopia">
+                {t("accessibility.tritanopia")}
+              </option>
+            </select>
           </label>
 
           <label className="setting-checkbox">
             <input
               type="checkbox"
               checked={highContrast}
-              onChange={(e) =>
-                setHighContrast(e.target.checked)
+              onChange={(event) =>
+                setHighContrast(event.target.checked)
               }
             />
-            {t.highContrast}
+            {t("accessibility.highContrast")}
           </label>
 
           <label className="setting-checkbox">
             <input
               type="checkbox"
               checked={reducedMotion}
-              onChange={(e) =>
-                setReducedMotion(e.target.checked)
+              onChange={(event) =>
+                setReducedMotion(event.target.checked)
               }
             />
-            {t.reducedMotion}
+            {t("accessibility.reducedMotion")}
+          </label>
+
+          <label className="setting-checkbox">
+            <input
+              type="checkbox"
+              checked={enhancedFocus}
+              onChange={(event) =>
+                setEnhancedFocus(event.target.checked)
+              }
+            />
+            {t("accessibility.keyboardFocus")}
           </label>
         </section>
       )}
 
-      {/* Main welcome content */}
+      {/* Welcome content */}
       <section className="welcome-content">
         <img
           className="astra-logo"
@@ -340,44 +289,50 @@ export default function WelcomeScreen({
 
         <h1>ASTRA</h1>
 
-        <h2>{t.subtitle}</h2>
+        <h2>{t("welcome.subtitle")}</h2>
 
-        <p>{t.description}</p>
+        <p>{t("welcome.description")}</p>
 
         <div className="welcome-status">
           <span className="status-dot" />
-          SYSTEMS READY
+          {t("welcome.systemReady")}
         </div>
 
         <button
           className="enter-button"
           onClick={() => setLoginOpen(true)}
         >
-          {t.enter} <span aria-hidden="true">→</span>
+          {t("welcome.enter")} <span aria-hidden="true">→</span>
         </button>
 
         <button
           className="music-button"
           onClick={toggleMusic}
           aria-pressed={musicPlaying}
-          aria-label={musicPlaying ? t.musicOff : t.musicOn}
+          aria-label={
+            musicPlaying
+              ? t("welcome.musicOff")
+              : t("welcome.musicOn")
+          }
         >
           {musicPlaying ? "Ⅱ" : "♫"}{" "}
-          {musicPlaying ? t.musicOff : t.musicOn}
+          {musicPlaying
+            ? t("welcome.musicOff")
+            : t("welcome.musicOn")}
         </button>
       </section>
 
       {/* Footer */}
       <footer className="welcome-footer">
-        {t.credits}
+        {t("welcome.credits")}
       </footer>
 
       {/* Login modal */}
       {loginOpen && (
         <div
           className="login-backdrop"
-          onMouseDown={(e) => {
-            if (e.target === e.currentTarget) {
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
               setLoginOpen(false);
             }
           }}
@@ -391,12 +346,14 @@ export default function WelcomeScreen({
             <button
               className="modal-close"
               onClick={() => setLoginOpen(false)}
-              aria-label={t.close}
+              aria-label={t("accessibility.close")}
             >
               ×
             </button>
 
-            <h2 id="astra-login-title">{t.login}</h2>
+            <h2 id="astra-login-title">
+              {t("auth.login")}
+            </h2>
 
             {loginContent}
           </section>

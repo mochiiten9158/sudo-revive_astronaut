@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PreferencesProvider } from "./context/PreferencesContext";
 
 import {
   BrowserRouter,
@@ -128,10 +129,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+    <PreferencesProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </BrowserRouter>
+    </PreferencesProvider>
   );
 }

@@ -13,13 +13,15 @@ import {
   Moon,
   Brain,
   Utensils,
-  Droplets,
   Database,
   Info,
+  Droplets,
 } from "lucide-react";
 
 import { getMyHealthData } from "../services/api";
 import { useMissionDay } from "../context/MissionDayContext";
+import { usePreferences } from "../context/PreferencesContext";
+import type { TranslationKey } from "../i18n/translations";
 import type { MyHealthResponse } from "../types/health";
 
 type MetricDefinition = {
@@ -41,40 +43,10 @@ const metricGroups = [
     icon: Scale,
     color: "text-cyan-400",
     metrics: [
-      {
-        key: "Body_Mass_kg",
-        label: "Body mass",
-        unit: "kg",
-        description: "Measured body mass",
-        group: "physical",
-        digits: 1,
-      },
-      {
-        key: "Body_Mass_pct_Baseline",
-        label: "Body mass",
-        unit: "% of baseline",
-        description: "Body mass relative to the recorded baseline",
-        group: "physical",
-        alreadyBaselinePercent: true,
-        digits: 1,
-      },
-      {
-        key: "BMI_kg_m2",
-        label: "BMI",
-        unit: "kg/m²",
-        description: "Body mass index",
-        group: "physical",
-        digits: 1,
-      },
-      {
-        key: "Muscle_Mass_Index_pct_Baseline",
-        label: "Muscle mass index",
-        unit: "% of baseline",
-        description: "Muscle mass index relative to baseline",
-        group: "physical",
-        alreadyBaselinePercent: true,
-        digits: 1,
-      },
+      { key: "Body_Mass_kg", label: "Body mass", unit: "kg", description: "Measured body mass", group: "physical", digits: 1 },
+      { key: "Body_Mass_pct_Baseline", label: "Body mass", unit: "% of baseline", description: "Body mass relative to the recorded baseline", group: "physical", alreadyBaselinePercent: true, digits: 1 },
+      { key: "BMI_kg_m2", label: "BMI", unit: "kg/m²", description: "Body mass index", group: "physical", digits: 1 },
+      { key: "Muscle_Mass_Index_pct_Baseline", label: "Muscle mass index", unit: "% of baseline", description: "Muscle mass index relative to baseline", group: "physical", alreadyBaselinePercent: true, digits: 1 },
     ],
   },
   {
@@ -84,42 +56,10 @@ const metricGroups = [
     icon: Bone,
     color: "text-violet-400",
     metrics: [
-      {
-        key: "Bone_Density_Index_pct_Baseline",
-        label: "Bone density index",
-        unit: "% of baseline",
-        description: "Bone density relative to pre-flight baseline",
-        group: "bone",
-        alreadyBaselinePercent: true,
-        digits: 1,
-      },
-      {
-        key: "Muscle_Strength_Index_pct_Baseline",
-        label: "Muscle strength index",
-        unit: "% of baseline",
-        description: "Muscle strength relative to baseline",
-        group: "bone",
-        alreadyBaselinePercent: true,
-        digits: 1,
-      },
-      {
-        key: "Grip_Strength_pct_Baseline",
-        label: "Grip strength",
-        unit: "% of baseline",
-        description: "Grip strength relative to baseline",
-        group: "bone",
-        alreadyBaselinePercent: true,
-        digits: 1,
-      },
-      {
-        key: "VO2max_Index_pct_Baseline",
-        label: "VO₂ max index",
-        unit: "% of baseline",
-        description: "Aerobic capacity relative to baseline",
-        group: "bone",
-        alreadyBaselinePercent: true,
-        digits: 1,
-      },
+      { key: "Bone_Density_Index_pct_Baseline", label: "Bone density index", unit: "% of baseline", description: "Bone density relative to pre-flight baseline", group: "bone", alreadyBaselinePercent: true, digits: 1 },
+      { key: "Muscle_Strength_Index_pct_Baseline", label: "Muscle strength index", unit: "% of baseline", description: "Muscle strength relative to baseline", group: "bone", alreadyBaselinePercent: true, digits: 1 },
+      { key: "Grip_Strength_pct_Baseline", label: "Grip strength", unit: "% of baseline", description: "Grip strength relative to baseline", group: "bone", alreadyBaselinePercent: true, digits: 1 },
+      { key: "VO2max_Index_pct_Baseline", label: "VO₂ max index", unit: "% of baseline", description: "Aerobic capacity relative to baseline", group: "bone", alreadyBaselinePercent: true, digits: 1 },
     ],
   },
   {
@@ -129,38 +69,10 @@ const metricGroups = [
     icon: HeartPulse,
     color: "text-rose-400",
     metrics: [
-      {
-        key: "Resting_HR_bpm",
-        label: "Resting heart rate",
-        unit: "bpm",
-        description: "Resting heart rate",
-        group: "cardiovascular",
-        digits: 0,
-      },
-      {
-        key: "Systolic_BP_mmHg",
-        label: "Systolic blood pressure",
-        unit: "mmHg",
-        description: "Systolic blood pressure",
-        group: "cardiovascular",
-        digits: 0,
-      },
-      {
-        key: "Diastolic_BP_mmHg",
-        label: "Diastolic blood pressure",
-        unit: "mmHg",
-        description: "Diastolic blood pressure",
-        group: "cardiovascular",
-        digits: 0,
-      },
-      {
-        key: "SpO2_pct",
-        label: "Oxygen saturation",
-        unit: "%",
-        description: "Peripheral oxygen saturation",
-        group: "cardiovascular",
-        digits: 1,
-      },
+      { key: "Resting_HR_bpm", label: "Resting heart rate", unit: "bpm", description: "Resting heart rate", group: "cardiovascular", digits: 0 },
+      { key: "Systolic_BP_mmHg", label: "Systolic blood pressure", unit: "mmHg", description: "Systolic blood pressure", group: "cardiovascular", digits: 0 },
+      { key: "Diastolic_BP_mmHg", label: "Diastolic blood pressure", unit: "mmHg", description: "Diastolic blood pressure", group: "cardiovascular", digits: 0 },
+      { key: "SpO2_pct", label: "Oxygen saturation", unit: "%", description: "Peripheral oxygen saturation", group: "cardiovascular", digits: 1 },
     ],
   },
   {
@@ -170,39 +82,10 @@ const metricGroups = [
     icon: Moon,
     color: "text-indigo-400",
     metrics: [
-      {
-        key: "Sleep_Duration_hours",
-        label: "Sleep duration",
-        unit: "hours",
-        description: "Recorded sleep duration",
-        group: "sleep",
-        digits: 1,
-      },
-      {
-        key: "Sleep_Efficiency_pct",
-        label: "Sleep efficiency",
-        unit: "%",
-        description: "Percentage of time in bed spent asleep",
-        group: "sleep",
-        digits: 1,
-      },
-      {
-        key: "Sleep_Quality_Score",
-        label: "Sleep quality",
-        unit: "score",
-        description: "Recorded sleep quality score",
-        group: "sleep",
-        digits: 1,
-      },
-      {
-        key: "Fatigue_Score_0_10",
-        label: "Fatigue",
-        unit: "/10",
-        description: "Self-reported fatigue score",
-        group: "sleep",
-        lowerIsBetter: true,
-        digits: 1,
-      },
+      { key: "Sleep_Duration_hours", label: "Sleep duration", unit: "hours", description: "Recorded sleep duration", group: "sleep", digits: 1 },
+      { key: "Sleep_Efficiency_pct", label: "Sleep efficiency", unit: "%", description: "Percentage of time in bed spent asleep", group: "sleep", digits: 1 },
+      { key: "Sleep_Quality_Score", label: "Sleep quality", unit: "score", description: "Recorded sleep quality score", group: "sleep", digits: 1 },
+      { key: "Fatigue_Score_0_10", label: "Fatigue", unit: "/10", description: "Self-reported fatigue score", group: "sleep", lowerIsBetter: true, digits: 1 },
     ],
   },
   {
@@ -212,40 +95,10 @@ const metricGroups = [
     icon: Brain,
     color: "text-amber-400",
     metrics: [
-      {
-        key: "Cognitive_Performance_Index",
-        label: "Cognitive performance",
-        unit: "index",
-        description: "Recorded cognitive performance index",
-        group: "cognitive",
-        digits: 1,
-      },
-      {
-        key: "PVT_Reaction_Time_ms",
-        label: "Reaction time",
-        unit: "ms",
-        description: "Psychomotor vigilance reaction time",
-        group: "cognitive",
-        lowerIsBetter: true,
-        digits: 1,
-      },
-      {
-        key: "Stress_Score_0_10",
-        label: "Stress",
-        unit: "/10",
-        description: "Self-reported stress score",
-        group: "cognitive",
-        lowerIsBetter: true,
-        digits: 1,
-      },
-      {
-        key: "Mood_Score_0_10",
-        label: "Mood",
-        unit: "/10",
-        description: "Self-reported mood score",
-        group: "cognitive",
-        digits: 1,
-      },
+      { key: "Cognitive_Performance_Index", label: "Cognitive performance", unit: "index", description: "Recorded cognitive performance index", group: "cognitive", digits: 1 },
+      { key: "PVT_Reaction_Time_ms", label: "Reaction time", unit: "ms", description: "Psychomotor vigilance reaction time", group: "cognitive", lowerIsBetter: true, digits: 1 },
+      { key: "Stress_Score_0_10", label: "Stress", unit: "/10", description: "Self-reported stress score", group: "cognitive", lowerIsBetter: true, digits: 1 },
+      { key: "Mood_Score_0_10", label: "Mood", unit: "/10", description: "Self-reported mood score", group: "cognitive", digits: 1 },
     ],
   },
   {
@@ -255,39 +108,10 @@ const metricGroups = [
     icon: Utensils,
     color: "text-emerald-400",
     metrics: [
-      {
-        key: "Water_Intake_L",
-        label: "Water intake",
-        unit: "L",
-        description: "Recorded daily water intake",
-        group: "nutrition",
-        digits: 1,
-      },
-      {
-        key: "Caloric_Intake_kcal",
-        label: "Caloric intake",
-        unit: "kcal",
-        description: "Recorded caloric intake",
-        group: "nutrition",
-        digits: 0,
-      },
-      {
-        key: "Vitamin_D_ng_mL",
-        label: "Vitamin D",
-        unit: "ng/mL",
-        description: "Recorded vitamin D concentration",
-        group: "nutrition",
-        digits: 1,
-      },
-      {
-        key: "Homocysteine_umol_L",
-        label: "Homocysteine",
-        unit: "µmol/L",
-        description: "Recorded homocysteine concentration",
-        group: "nutrition",
-        lowerIsBetter: true,
-        digits: 1,
-      },
+      { key: "Water_Intake_L", label: "Water intake", unit: "L", description: "Recorded daily water intake", group: "nutrition", digits: 1 },
+      { key: "Caloric_Intake_kcal", label: "Caloric intake", unit: "kcal", description: "Recorded caloric intake", group: "nutrition", digits: 0 },
+      { key: "Vitamin_D_ng_mL", label: "Vitamin D", unit: "ng/mL", description: "Recorded vitamin D concentration", group: "nutrition", digits: 1 },
+      { key: "Homocysteine_umol_L", label: "Homocysteine", unit: "µmol/L", description: "Recorded homocysteine concentration", group: "nutrition", lowerIsBetter: true, digits: 1 },
     ],
   },
 ] satisfies {
@@ -299,10 +123,68 @@ const metricGroups = [
   metrics: MetricDefinition[];
 }[];
 
+const groupTranslationKeys: Record<
+  string,
+  { label: TranslationKey; description: TranslationKey }
+> = {
+  physical: {
+    label: "baseline.bodyComposition",
+    description: "baseline.bodyCompositionDescription",
+  },
+  bone: {
+    label: "baseline.boneMuscle",
+    description: "baseline.boneMuscleDescription",
+  },
+  cardiovascular: {
+    label: "baseline.cardiovascular",
+    description: "baseline.cardiovascularDescription",
+  },
+  sleep: {
+    label: "baseline.sleepRecovery",
+    description: "baseline.sleepRecoveryDescription",
+  },
+  cognitive: {
+    label: "baseline.cognitiveBehavioral",
+    description: "baseline.cognitiveBehavioralDescription",
+  },
+  nutrition: {
+    label: "baseline.nutritionHydration",
+    description: "baseline.nutritionHydrationDescription",
+  },
+};
+
+const metricTranslationKeys: Record<
+  string,
+  { label: TranslationKey; description: TranslationKey }
+> = {
+  Body_Mass_kg: { label: "baseline.bodyMass", description: "baseline.measuredBodyMass" },
+  Body_Mass_pct_Baseline: { label: "baseline.bodyMass", description: "baseline.bodyMassRelative" },
+  BMI_kg_m2: { label: "baseline.bmi", description: "baseline.bodyMassIndex" },
+  Muscle_Mass_Index_pct_Baseline: { label: "baseline.muscleMassIndex", description: "baseline.muscleMassRelative" },
+  Bone_Density_Index_pct_Baseline: { label: "baseline.boneDensity", description: "baseline.boneDensityRelative" },
+  Muscle_Strength_Index_pct_Baseline: { label: "baseline.muscleStrength", description: "baseline.muscleStrengthRelative" },
+  Grip_Strength_pct_Baseline: { label: "baseline.gripStrength", description: "baseline.gripStrengthRelative" },
+  VO2max_Index_pct_Baseline: { label: "baseline.vo2max", description: "baseline.vo2maxDescription" },
+  Resting_HR_bpm: { label: "baseline.restingHr", description: "baseline.restingHr" },
+  Systolic_BP_mmHg: { label: "baseline.systolicBp", description: "baseline.systolicBp" },
+  Diastolic_BP_mmHg: { label: "baseline.diastolicBp", description: "baseline.diastolicBp" },
+  SpO2_pct: { label: "baseline.oxygenSaturation", description: "baseline.oxygenDescription" },
+  Sleep_Duration_hours: { label: "baseline.sleepDuration", description: "baseline.recordedSleepDuration" },
+  Sleep_Efficiency_pct: { label: "baseline.sleepEfficiency", description: "baseline.sleepEfficiencyDescription" },
+  Sleep_Quality_Score: { label: "baseline.sleepQuality", description: "baseline.sleepQualityDescription" },
+  Fatigue_Score_0_10: { label: "baseline.fatigue", description: "baseline.fatigueDescription" },
+  Cognitive_Performance_Index: { label: "baseline.cognitivePerformance", description: "baseline.cognitivePerformanceDescription" },
+  PVT_Reaction_Time_ms: { label: "baseline.reactionTime", description: "baseline.reactionTimeDescription" },
+  Stress_Score_0_10: { label: "baseline.stress", description: "baseline.stressDescription" },
+  Mood_Score_0_10: { label: "baseline.mood", description: "baseline.mood" },
+  Water_Intake_L: { label: "baseline.waterIntake", description: "baseline.waterIntakeDescription" },
+  Caloric_Intake_kcal: { label: "baseline.caloricIntake", description: "baseline.caloricIntakeDescription" },
+  Vitamin_D_ng_mL: { label: "baseline.vitaminD", description: "baseline.vitaminDDescription" },
+  Homocysteine_umol_L: { label: "baseline.homocysteine", description: "baseline.homocysteineDescription" },
+};
+
 function numericValue(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
+  if (typeof value === "number" && Number.isFinite(value)) return value;
 
   if (typeof value === "string" && value.trim() !== "") {
     const parsed = Number(value);
@@ -343,11 +225,13 @@ function MetricCard({
   baseline,
   current,
   baselineCount,
+  t,
 }: {
   metric: MetricDefinition;
   baseline: number | null;
   current: number | null;
   baselineCount: number;
+  t: (key: TranslationKey) => string;
 }) {
   const difference =
     baseline !== null && current !== null ? current - baseline : null;
@@ -363,15 +247,17 @@ function MetricCard({
       ? "text-slate-500"
       : getChangeColor(difference, metric.lowerIsBetter);
 
+  const metricKeys = metricTranslationKeys[metric.key];
+
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-slate-200">
-            {metric.label}
+            {t(metricKeys.label)}
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            {metric.description}
+            {t(metricKeys.description)}
           </p>
         </div>
         <Icon size={17} className={color} />
@@ -380,7 +266,7 @@ function MetricCard({
       <div className="mt-5 grid grid-cols-2 gap-3">
         <div>
           <p className="text-[11px] uppercase tracking-wider text-slate-500">
-            Pre-flight average
+            {t("baseline.preFlightAverage")}
           </p>
           <p className="mt-1 text-xl font-semibold text-slate-300 tabular-nums">
             {formatValue(baseline, metric.digits)}
@@ -390,7 +276,7 @@ function MetricCard({
 
         <div>
           <p className="text-[11px] uppercase tracking-wider text-slate-500">
-            Selected observation
+            {t("baseline.selectedObservation")}
           </p>
           <p className="mt-1 text-xl font-semibold text-white tabular-nums">
             {formatValue(current, metric.digits)}
@@ -402,27 +288,31 @@ function MetricCard({
       <div className="mt-4 border-t border-slate-800 pt-3">
         {baseline === null || current === null ? (
           <p className="text-xs text-slate-500">
-            Insufficient recorded values for comparison
+            {t("baseline.insufficientValues")}
           </p>
         ) : metric.alreadyBaselinePercent ? (
           <div>
             <p className="text-xs text-slate-400">
-              Recorded relative to baseline
+              {t("baseline.recordedRelative")}
             </p>
             <p className={`mt-1 text-sm font-semibold ${color}`}>
-              {formatValue(current, metric.digits)}% of baseline
+              {formatValue(current, metric.digits)}% {t("baseline.ofBaseline")}
             </p>
           </div>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <p className="text-xs text-slate-500">Absolute change</p>
+              <p className="text-xs text-slate-500">
+                {t("baseline.absoluteChange")}
+              </p>
               <p className={`mt-1 text-sm font-semibold ${color}`}>
                 {formatChange(difference ?? 0, metric.digits)} {metric.unit}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-slate-500">Relative change</p>
+              <p className="text-xs text-slate-500">
+                {t("baseline.relativeChange")}
+              </p>
               <p className={`mt-1 text-sm font-semibold ${color}`}>
                 {percentageChange === null
                   ? "—"
@@ -435,7 +325,7 @@ function MetricCard({
 
       {baselineCount < 2 && (
         <p className="mt-3 text-[11px] text-amber-400">
-          Limited pre-flight reference
+          {t("baseline.limitedPreFlight")}
         </p>
       )}
     </div>
@@ -447,6 +337,7 @@ export default function PersonalBaseline() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { selectedMissionDay } = useMissionDay();
+  const { t } = usePreferences();
 
   useEffect(() => {
     let active = true;
@@ -457,17 +348,9 @@ export default function PersonalBaseline() {
         setError(null);
         const response = await getMyHealthData();
 
-        if (active) {
-          setHealth(response);
-        }
-      } catch (err) {
-        if (active) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Unable to load baseline data.",
-          );
-        }
+        if (active) setHealth(response);
+      } catch {
+        if (active) setError(t("baseline.fallbackError"));
       } finally {
         if (active) setLoading(false);
       }
@@ -526,7 +409,7 @@ export default function PersonalBaseline() {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="flex items-center gap-3 text-slate-400">
           <RefreshCw size={18} className="animate-spin" />
-          Loading personal baseline...
+          {t("baseline.loading")}
         </div>
       </div>
     );
@@ -537,14 +420,14 @@ export default function PersonalBaseline() {
       <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-5">
         <div className="flex items-center gap-3 text-rose-300">
           <AlertCircle size={20} />
-          <p className="font-medium">Unable to load personal baseline</p>
+          <p className="font-medium">{t("baseline.loadError")}</p>
         </div>
         <p className="mt-2 text-sm text-slate-400">{error}</p>
         <button
           onClick={() => window.location.reload()}
           className="mt-4 rounded-lg border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800"
         >
-          Retry
+          {t("baseline.retry")}
         </button>
       </div>
     );
@@ -555,11 +438,10 @@ export default function PersonalBaseline() {
       <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-8 text-center">
         <Database size={28} className="mx-auto text-slate-500" />
         <h2 className="mt-3 text-lg font-semibold text-white">
-          No observations available
+          {t("baseline.noObservations")}
         </h2>
         <p className="mt-2 text-sm text-slate-400">
-          Personal baseline comparisons will appear when health observations
-          are available.
+          {t("baseline.noObservationsDescription")}
         </p>
       </div>
     );
@@ -579,32 +461,34 @@ export default function PersonalBaseline() {
             <div className="flex items-center gap-2 text-cyan-400">
               <Activity size={19} />
               <span className="text-xs font-semibold uppercase tracking-[0.18em]">
-                Personal health reference
+                {t("baseline.reference")}
               </span>
             </div>
             <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
-              Individual baseline
+              {t("baseline.individual")}
             </span>
           </div>
 
           <h1 className="mt-4 text-2xl font-semibold tracking-tight text-white">
-            Personal Baseline
+            {t("baseline.title")}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
-            Understand how recorded health measurements compare with your
-            own pre-flight reference. Changes are measured against your
-            individual history rather than a generic population average.
+            {t("baseline.description")}
           </p>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-slate-700/70 bg-slate-950/40 p-4">
-              <p className="text-xs text-slate-500">Pre-flight observations</p>
+              <p className="text-xs text-slate-500">
+                {t("baseline.preFlightObservations")}
+              </p>
               <p className="mt-1 text-2xl font-semibold text-white tabular-nums">
                 {baselineRecords.length}
               </p>
             </div>
             <div className="rounded-xl border border-slate-700/70 bg-slate-950/40 p-4">
-              <p className="text-xs text-slate-500">Selected mission day</p>
+              <p className="text-xs text-slate-500">
+                {t("baseline.selectedMissionDay")}
+              </p>
               <p className="mt-1 text-2xl font-semibold text-white tabular-nums">
                 {selectedRecord
                   ? selectedRecord.Mission_Day > 0
@@ -614,7 +498,9 @@ export default function PersonalBaseline() {
               </p>
             </div>
             <div className="rounded-xl border border-slate-700/70 bg-slate-950/40 p-4">
-              <p className="text-xs text-slate-500">Recorded observations</p>
+              <p className="text-xs text-slate-500">
+                {t("baseline.recordedObservations")}
+              </p>
               <p className="mt-1 text-2xl font-semibold text-white tabular-nums">
                 {observations.length}
               </p>
@@ -628,12 +514,10 @@ export default function PersonalBaseline() {
           <Info size={18} className="mt-0.5 shrink-0 text-amber-400" />
           <div>
             <p className="text-sm font-medium text-amber-300">
-              Synthetic demonstration data
+              {t("baseline.syntheticTitle")}
             </p>
             <p className="mt-1 text-xs leading-relaxed text-slate-400">
-              These measurements are simulated for demonstration. They are
-              not actual astronaut health records and must not be interpreted
-              as clinical findings.
+              {t("baseline.syntheticDescription")}
             </p>
           </div>
         </div>
@@ -642,37 +526,43 @@ export default function PersonalBaseline() {
       <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
         <div className="flex items-center gap-2">
           <Database size={18} className="text-cyan-400" />
-          <h2 className="font-semibold text-white">How your baseline is calculated</h2>
+          <h2 className="font-semibold text-white">
+            {t("baseline.calculationTitle")}
+          </h2>
         </div>
         <p className="mt-2 text-sm leading-relaxed text-slate-400">
-          The reference is calculated from available observations before
-          mission day 0. Each metric uses the mean of its available pre-flight
-          values. The selected observation is compared with that reference.
+          {t("baseline.calculationDescription")}
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div className="rounded-lg bg-slate-950/60 p-3">
-            <p className="text-xs text-slate-500">Reference observations</p>
+            <p className="text-xs text-slate-500">
+              {t("baseline.referenceObservations")}
+            </p>
             <p className="mt-1 text-sm font-medium text-slate-200">
               {baselineRecords.length > 0
                 ? baselineRecords
-                    .map((record) => `Day ${record.Mission_Day}`)
+                    .map(
+                      (record) =>
+                        `${t("baseline.missionDay")} ${record.Mission_Day}`,
+                    )
                     .join(" · ")
-                : "No pre-flight observations found"}
+                : t("baseline.noPreFlight")}
             </p>
           </div>
           <div className="rounded-lg bg-slate-950/60 p-3">
-            <p className="text-xs text-slate-500">Comparison target</p>
+            <p className="text-xs text-slate-500">
+              {t("baseline.comparisonTarget")}
+            </p>
             <p className="mt-1 text-sm font-medium text-slate-200">
               {selectedRecord
-                ? `Mission day ${selectedRecord.Mission_Day}`
-                : "No observation for selected day"}
+                ? `${t("baseline.missionDay")} ${selectedRecord.Mission_Day}`
+                : t("baseline.noSelectedObservation")}
             </p>
           </div>
         </div>
         {baselineRecords.length < 2 && (
           <p className="mt-3 text-xs text-amber-400">
-            Fewer than two pre-flight observations are available. Interpret
-            comparisons cautiously.
+            {t("baseline.limitedReference")}
           </p>
         )}
       </section>
@@ -681,11 +571,12 @@ export default function PersonalBaseline() {
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
           <div className="flex items-center gap-2 text-amber-300">
             <AlertCircle size={18} />
-            <p className="font-medium">No observation for this mission day</p>
+            <p className="font-medium">
+              {t("baseline.noObservationTitle")}
+            </p>
           </div>
           <p className="mt-2 text-sm text-slate-400">
-            Select a mission day with a recorded observation to compare it
-            against your pre-flight reference.
+            {t("baseline.noObservationDescription")}
           </p>
         </div>
       ) : (
@@ -693,20 +584,21 @@ export default function PersonalBaseline() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-white">
-                Baseline comparisons
+                {t("baseline.comparisons")}
               </h2>
               <p className="mt-1 text-xs text-slate-500">
-                Selected observation: {selectedRecord.Phase} · Mission day{" "}
-                {selectedRecord.Mission_Day}
+                {t("baseline.selectedObservation")}: {selectedRecord.Phase} ·{" "}
+                {t("baseline.missionDay")} {selectedRecord.Mission_Day}
               </p>
             </div>
             <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1 text-xs text-slate-400">
-              {baselineRecords.length} reference records
+              {baselineRecords.length} {t("baseline.referenceRecords")}
             </span>
           </div>
 
           {metricGroups.map((group) => {
             const GroupIcon = group.icon;
+            const groupKeys = groupTranslationKeys[group.key];
 
             return (
               <section key={group.key} className="space-y-3">
@@ -715,9 +607,11 @@ export default function PersonalBaseline() {
                     <GroupIcon size={18} className={group.color} />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white">{group.label}</h3>
+                    <h3 className="font-semibold text-white">
+                      {t(groupKeys.label)}
+                    </h3>
                     <p className="text-xs text-slate-500">
-                      {group.description}
+                      {t(groupKeys.description)}
                     </p>
                   </div>
                 </div>
@@ -735,6 +629,7 @@ export default function PersonalBaseline() {
                             numericValue(record[metric.key]) !== null,
                         ).length
                       }
+                      t={t}
                     />
                   ))}
                 </div>
@@ -747,35 +642,30 @@ export default function PersonalBaseline() {
       <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-5">
         <div className="flex items-center gap-2">
           <Droplets size={18} className="text-cyan-400" />
-          <h2 className="font-semibold text-white">Reading the comparisons</h2>
+          <h2 className="font-semibold text-white">
+            {t("baseline.readingTitle")}
+          </h2>
         </div>
         <div className="mt-4 space-y-3 text-sm text-slate-400">
           <p>
-            <span className="font-medium text-emerald-400">Green changes</span>{" "}
-            indicate movement in the generally favorable direction for the
-            metric's configured comparison rule. They do not establish
-            clinical improvement.
+            <span className="font-medium text-emerald-400">
+              {t("baseline.greenChanges")}
+            </span>{" "}
+            {t("baseline.greenDescription")}
           </p>
           <p>
-            <span className="font-medium text-amber-400">Amber changes</span>{" "}
-            indicate movement in the opposite direction. They are comparison
-            cues, not medical alerts or diagnoses.
+            <span className="font-medium text-amber-400">
+              {t("baseline.amberChanges")}
+            </span>{" "}
+            {t("baseline.amberDescription")}
           </p>
-          <p>
-            Metrics already recorded as a percentage of baseline are shown
-            directly. They are not recalculated as a percentage change from
-            the pre-flight average.
-          </p>
-          <p>
-            Missing measurements are left blank. The page does not interpolate
-            values between observation dates.
-          </p>
+          <p>{t("baseline.percentageDescription")}</p>
+          <p>{t("baseline.missingDescription")}</p>
         </div>
       </section>
 
       <p className="text-center text-xs text-slate-600">
-        Personal reference comparisons are informational and do not replace
-        medical evaluation or mission health protocols.
+        {t("baseline.disclaimer")}
       </p>
     </div>
   );

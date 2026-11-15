@@ -22,12 +22,15 @@ import {
 
 import { getMyHealthData } from "../services/api";
 import { useMissionDay } from "../context/MissionDayContext";
+import { usePreferences } from "../context/PreferencesContext";
 
 import type {
   HealthRecord,
   MyHealthResponse,
   HealthStatus,
 } from "../types/health";
+
+import type { TranslationKey } from "../i18n/translations";
 
 type PhaseGroup = {
   key: string;
@@ -41,6 +44,8 @@ type PhaseGroup = {
   records: HealthRecord[];
 };
 
+type Translate = (key: TranslationKey) => string;
+
 function phaseKey(phase: string): string {
   const normalized = phase.toLowerCase().replaceAll("_", " ");
 
@@ -50,12 +55,23 @@ function phaseKey(phase: string): string {
   return "in-flight";
 }
 
-function phaseInformation(key: string) {
+function phaseTranslationKey(key: string): TranslationKey {
+  switch (key) {
+    case "pre-flight":
+      return "timeline.preFlight";
+    case "post-flight":
+      return "timeline.postFlight";
+    default:
+      return "timeline.inFlight";
+  }
+}
+
+function phaseInformation(key: string, t: Translate) {
   switch (key) {
     case "pre-flight":
       return {
-        label: "Pre-flight",
-        description: "Reference observations before mission operations.",
+        label: t("timeline.preFlight"),
+        description: t("timeline.preDescription"),
         icon: Flag,
         color: "text-violet-400",
         border: "border-violet-500/30",
@@ -65,8 +81,8 @@ function phaseInformation(key: string) {
 
     case "post-flight":
       return {
-        label: "Post-flight",
-        description: "Recorded observations following the mission phase.",
+        label: t("timeline.postFlight"),
+        description: t("timeline.postDescription"),
         icon: Activity,
         color: "text-emerald-400",
         border: "border-emerald-500/30",
@@ -76,8 +92,8 @@ function phaseInformation(key: string) {
 
     default:
       return {
-        label: "In-flight",
-        description: "Observations recorded during mission operations.",
+        label: t("timeline.inFlight"),
+        description: t("timeline.inDescription"),
         icon: Orbit,
         color: "text-cyan-400",
         border: "border-cyan-500/30",
@@ -87,11 +103,11 @@ function phaseInformation(key: string) {
   }
 }
 
-function statusInformation(status: HealthStatus) {
+function statusInformation(status: HealthStatus | "unknown", t: Translate) {
   switch (status) {
     case "critical":
       return {
-        label: "Critical",
+        label: t("timeline.critical"),
         icon: ShieldAlert,
         color: "text-red-400",
         badge: "border-red-500/30 bg-red-500/10 text-red-400",
@@ -100,7 +116,7 @@ function statusInformation(status: HealthStatus) {
 
     case "warning":
       return {
-        label: "Warning",
+        label: t("timeline.warning"),
         icon: AlertTriangle,
         color: "text-amber-400",
         badge: "border-amber-500/30 bg-amber-500/10 text-amber-400",
@@ -109,7 +125,7 @@ function statusInformation(status: HealthStatus) {
 
     case "normal":
       return {
-        label: "Normal",
+        label: t("timeline.normal"),
         icon: CheckCircle2,
         color: "text-emerald-400",
         badge: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
@@ -118,7 +134,7 @@ function statusInformation(status: HealthStatus) {
 
     default:
       return {
-        label: "Unknown",
+        label: t("timeline.unknown"),
         icon: CircleDot,
         color: "text-slate-400",
         badge: "border-slate-700 bg-slate-800 text-slate-400",
@@ -170,12 +186,6 @@ function parseAlertReasons(record: HealthRecord): string[] {
     .filter(Boolean);
 }
 
-function formatPhase(phase: string): string {
-  return phase
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-}
-
 function MetricItem({
   icon: Icon,
   label,
@@ -205,6 +215,7 @@ function MetricItem({
 }
 
 export default function MissionTimeline() {
+  const { t } = usePreferences();
   const { selectedMissionDay, setSelectedMissionDay } = useMissionDay();
 
   const [health, setHealth] = useState<MyHealthResponse | null>(null);
@@ -230,7 +241,7 @@ export default function MissionTimeline() {
           setError(
             err instanceof Error
               ? err.message
-              : "Unable to retrieve mission observations."
+              : t("timeline.fallbackError")
           );
         }
       } finally {
@@ -277,10 +288,10 @@ export default function MissionTimeline() {
       .filter(([, records]) => records.length > 0)
       .map(([key, records]) => ({
         key,
-        ...phaseInformation(key),
+        ...phaseInformation(key, t),
         records,
       })) as PhaseGroup[];
-  }, [observations]);
+  }, [observations, t]);
 
   const filteredObservations =
     phaseFilter === "all"
@@ -306,14 +317,14 @@ export default function MissionTimeline() {
     : [];
 
   const selectedStatus = selectedRecord
-    ? statusInformation(selectedRecord.Status)
-    : statusInformation("unknown");
+    ? statusInformation(selectedRecord.Status, t)
+    : statusInformation("unknown", t);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center gap-3 py-24 text-slate-400">
         <Orbit size={24} className="animate-spin text-cyan-400" />
-        Loading mission timeline...
+        {t("timeline.loading")}
       </div>
     );
   }
@@ -322,7 +333,7 @@ export default function MissionTimeline() {
     return (
       <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-6 text-red-300">
         <AlertTriangle size={20} className="mb-2" />
-        <p className="font-semibold">Unable to load mission timeline</p>
+        <p className="font-semibold">{t("timeline.loadError")}</p>
         <p className="mt-2 text-sm text-slate-400">{error}</p>
       </div>
     );
@@ -331,7 +342,7 @@ export default function MissionTimeline() {
   if (observations.length === 0) {
     return (
       <div className="rounded-xl border border-slate-800 bg-slate-900 p-6 text-slate-400">
-        No mission observations are available.
+        {t("timeline.noObservations")}
       </div>
     );
   }
@@ -341,22 +352,21 @@ export default function MissionTimeline() {
       <header>
         <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-cyan-400">
           <CalendarDays size={16} />
-          Mission history
+          {t("timeline.history")}
         </p>
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-3xl font-semibold text-white">
-              Mission Timeline
+              {t("timeline.title")}
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
-              Explore your recorded health observations across
-              pre-flight, in-flight, and post-flight phases.
+              {t("timeline.description")}
             </p>
           </div>
 
           <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-300">
-            {observations.length} recorded observations
+            {observations.length} {t("timeline.recordedCount")}
           </span>
         </div>
       </header>
@@ -369,13 +379,10 @@ export default function MissionTimeline() {
           />
           <div>
             <p className="text-sm font-medium text-amber-300">
-              Synthetic demonstration timeline
+              {t("timeline.syntheticTitle")}
             </p>
             <p className="mt-1 text-xs leading-relaxed text-slate-400">
-              These are simulated observations, not actual astronaut
-              telemetry. The timeline displays recorded data points
-              only. Gaps between observations do not imply continuous
-              monitoring.
+              {t("timeline.syntheticDescription")}
             </p>
           </div>
         </div>
@@ -383,28 +390,28 @@ export default function MissionTimeline() {
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-          <p className="text-xs text-slate-500">Total observations</p>
+          <p className="text-xs text-slate-500">{t("timeline.total")}</p>
           <p className="mt-2 text-2xl font-semibold text-white">
             {observations.length}
           </p>
         </div>
 
         <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
-          <p className="text-xs text-emerald-400">Normal</p>
+          <p className="text-xs text-emerald-400">{t("timeline.normal")}</p>
           <p className="mt-2 text-2xl font-semibold text-white">
             {normalCount}
           </p>
         </div>
 
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
-          <p className="text-xs text-amber-400">Warning</p>
+          <p className="text-xs text-amber-400">{t("timeline.warning")}</p>
           <p className="mt-2 text-2xl font-semibold text-white">
             {warningCount}
           </p>
         </div>
 
         <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
-          <p className="text-xs text-red-400">Critical</p>
+          <p className="text-xs text-red-400">{t("timeline.critical")}</p>
           <p className="mt-2 text-2xl font-semibold text-white">
             {criticalCount}
           </p>
@@ -416,22 +423,23 @@ export default function MissionTimeline() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-cyan-400">
-                Mission progression
+                {t("timeline.progression")}
               </p>
               <h3 className="mt-1 text-xl font-semibold text-white">
-                Observation history
+                {t("timeline.observationHistory")}
               </h3>
             </div>
 
             <select
               value={phaseFilter}
               onChange={(event) => setPhaseFilter(event.target.value)}
+              aria-label={t("timeline.phases")}
               className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
             >
-              <option value="all">All phases</option>
-              <option value="pre-flight">Pre-flight</option>
-              <option value="in-flight">In-flight</option>
-              <option value="post-flight">Post-flight</option>
+              <option value="all">{t("timeline.allPhases")}</option>
+              <option value="pre-flight">{t("timeline.preFlight")}</option>
+              <option value="in-flight">{t("timeline.inFlight")}</option>
+              <option value="post-flight">{t("timeline.postFlight")}</option>
             </select>
           </div>
 
@@ -441,8 +449,8 @@ export default function MissionTimeline() {
                 Number(record.Mission_Day) ===
                 Number(selectedRecord?.Mission_Day);
 
-              const phase = phaseInformation(phaseKey(record.Phase));
-              const status = statusInformation(record.Status);
+              const phase = phaseInformation(phaseKey(record.Phase), t);
+              const status = statusInformation(record.Status, t);
               const StatusIcon = status.icon;
               const alertReasons = parseAlertReasons(record);
 
@@ -453,6 +461,7 @@ export default function MissionTimeline() {
                   onClick={() =>
                     setSelectedMissionDay(Number(record.Mission_Day))
                   }
+                  aria-pressed={selected}
                   className={`group flex w-full items-start gap-4 rounded-xl border p-4 text-left transition ${
                     selected
                       ? "border-cyan-400/50 bg-cyan-500/10"
@@ -473,11 +482,11 @@ export default function MissionTimeline() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold text-white">
-                        Mission Day {record.Mission_Day}
+                        {t("timeline.missionDay")} {record.Mission_Day}
                       </span>
 
                       <span className="text-xs text-slate-500">
-                        {formatPhase(record.Phase)}
+                        {t(phaseTranslationKey(phaseKey(record.Phase)))}
                       </span>
                     </div>
 
@@ -490,8 +499,10 @@ export default function MissionTimeline() {
                       </span>
 
                       <span className="text-xs text-slate-500">
-                        {alertReasons.length} recorded{" "}
-                        {alertReasons.length === 1 ? "flag" : "flags"}
+                        {alertReasons.length}{" "}
+                        {alertReasons.length === 1
+                          ? t("timeline.flag")
+                          : t("timeline.flags")}
                       </span>
                     </div>
 
@@ -517,7 +528,7 @@ export default function MissionTimeline() {
 
           {filteredObservations.length === 0 && (
             <p className="py-10 text-center text-sm text-slate-500">
-              No observations in this phase.
+              {t("timeline.noPhaseObservations")}
             </p>
           )}
         </div>
@@ -525,14 +536,14 @@ export default function MissionTimeline() {
         <aside className="h-fit space-y-5">
           <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
             <p className="text-xs font-semibold uppercase tracking-widest text-cyan-400">
-              Selected observation
+              {t("timeline.selectedObservation")}
             </p>
 
             {selectedRecord ? (
               <>
                 <div className="mt-3 flex items-center justify-between gap-3">
                   <h3 className="text-2xl font-semibold text-white">
-                    Day {selectedRecord.Mission_Day}
+                    {t("timeline.day")} {selectedRecord.Mission_Day}
                   </h3>
 
                   <span
@@ -543,23 +554,23 @@ export default function MissionTimeline() {
                 </div>
 
                 <p className="mt-1 text-sm text-slate-400">
-                  {formatPhase(selectedRecord.Phase)}
+                  {t(phaseTranslationKey(phaseKey(selectedRecord.Phase)))}
                 </p>
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
                   <MetricItem
                     icon={Moon}
-                    label="Sleep"
+                    label={t("timeline.sleep")}
                     value={formatMetric(
                       selectedRecord,
                       "Sleep_Duration_hours"
                     )}
-                    unit="hours"
+                    unit={t("timeline.hours")}
                   />
 
                   <MetricItem
                     icon={HeartPulse}
-                    label="Resting HR"
+                    label={t("timeline.restingHr")}
                     value={formatMetric(
                       selectedRecord,
                       "Resting_HR_bpm"
@@ -569,7 +580,7 @@ export default function MissionTimeline() {
 
                   <MetricItem
                     icon={Dumbbell}
-                    label="Bone density"
+                    label={t("timeline.boneDensity")}
                     value={formatMetric(
                       selectedRecord,
                       "Bone_Density_Index_pct_Baseline"
@@ -579,7 +590,7 @@ export default function MissionTimeline() {
 
                   <MetricItem
                     icon={Radiation}
-                    label="Mission dose"
+                    label={t("timeline.missionDose")}
                     value={formatMetric(
                       selectedRecord,
                       "Cumulative_Mission_Dose_mSv",
@@ -590,7 +601,7 @@ export default function MissionTimeline() {
 
                   <MetricItem
                     icon={Brain}
-                    label="Fatigue"
+                    label={t("timeline.fatigue")}
                     value={formatMetric(
                       selectedRecord,
                       "Fatigue_Score_0_10"
@@ -600,7 +611,7 @@ export default function MissionTimeline() {
 
                   <MetricItem
                     icon={Droplets}
-                    label="Water intake"
+                    label={t("timeline.waterIntake")}
                     value={formatMetric(
                       selectedRecord,
                       "Water_Intake_L"
@@ -611,7 +622,7 @@ export default function MissionTimeline() {
               </>
             ) : (
               <p className="mt-4 text-sm text-slate-500">
-                Select an observation to view its details.
+                {t("timeline.selectPrompt")}
               </p>
             )}
           </div>
@@ -621,7 +632,7 @@ export default function MissionTimeline() {
               <div className="flex items-center gap-2">
                 <AlertTriangle size={17} className="text-amber-400" />
                 <h3 className="font-semibold text-white">
-                  Recorded flags
+                  {t("timeline.recordedFlags")}
                 </h3>
               </div>
 
@@ -639,7 +650,7 @@ export default function MissionTimeline() {
                 </ul>
               ) : (
                 <p className="mt-3 text-sm text-slate-400">
-                  No flags were recorded for this observation.
+                  {t("timeline.noFlags")}
                 </p>
               )}
 
@@ -649,7 +660,7 @@ export default function MissionTimeline() {
                 className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-2.5 text-sm text-cyan-300 transition hover:bg-cyan-500/20"
               >
                 <Activity size={15} />
-                Use this mission day across ASTRA
+                {t("timeline.useMissionDay")}
               </button>
             </div>
           )}
@@ -660,7 +671,7 @@ export default function MissionTimeline() {
         <div className="flex items-center gap-2">
           <Clock size={18} className="text-cyan-400" />
           <h3 className="font-semibold text-white">
-            Mission phases
+            {t("timeline.phases")}
           </h3>
         </div>
 
@@ -694,15 +705,15 @@ export default function MissionTimeline() {
                   {group.records.length}
                 </p>
                 <p className="text-xs text-slate-500">
-                  recorded observations
+                  {t("timeline.recordedObservations")}
                 </p>
 
                 <div className="mt-4 flex flex-wrap gap-3 text-xs">
                   <span className="text-amber-400">
-                    {warnings} warnings
+                    {warnings} {t("timeline.warnings")}
                   </span>
                   <span className="text-red-400">
-                    {critical} critical
+                    {critical} {t("timeline.criticalCount")}
                   </span>
                 </div>
               </div>
@@ -712,11 +723,7 @@ export default function MissionTimeline() {
       </section>
 
       <p className="text-xs leading-relaxed text-slate-600">
-        Timeline entries represent discrete recorded observations.
-        They should not be interpreted as a continuous monitoring
-        record. Status indicators and flags originate from the
-        synthetic demonstration dataset and are not clinical
-        assessments.
+        {t("timeline.disclaimer")}
       </p>
     </div>
   );

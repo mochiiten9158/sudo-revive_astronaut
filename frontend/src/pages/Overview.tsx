@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useMissionDay } from "../context/MissionDayContext";
+import { usePreferences } from "../context/PreferencesContext";
 
 import {
   Activity,
@@ -34,6 +35,8 @@ import type {
 } from "../types/health";
 
 import type { LucideIcon } from "lucide-react";
+
+type Translate = (key: any) => string;
 
 // --------------------------------------------------
 // HELPERS
@@ -101,10 +104,11 @@ function formatPhase(phase: string): string {
 }
 
 function formatDataOrigin(
-  origin: string | string[] | null
+  origin: string | string[] | null,
+  fallback: string
 ): string {
   if (!origin) {
-    return "Not specified";
+    return fallback;
   }
 
   return Array.isArray(origin) ? origin.join(", ") : origin;
@@ -114,21 +118,32 @@ function formatDataOrigin(
 // STATUS INDICATOR
 // --------------------------------------------------
 
-function StatusIndicator({ status }: { status: HealthStatus }) {
+function StatusIndicator({
+  status,
+  t,
+}: {
+  status: HealthStatus;
+  t: Translate;
+}) {
+  const statusLabels: Record<HealthStatus, string> = {
+    normal: t("overview.statusNormal"),
+    warning: t("overview.statusWarning"),
+    critical: t("overview.statusCritical"),
+    unknown: t("overview.statusUnknown"),
+  };
+
   return (
     <span className="inline-flex items-center gap-2 text-sm font-medium">
-      <span
-        className={`h-2.5 w-2.5 rounded-full ${statusDots[status]}`}
-      />
+      <span className={`h-2.5 w-2.5 rounded-full ${statusDots[status]}`} />
       <span className={statusStyles[status]}>
-        {status.toUpperCase()}
+        {statusLabels[status]}
       </span>
     </span>
   );
 }
 
 // --------------------------------------------------
-// SYMBOL-BASED HEALTH METRIC
+// HEALTH METRIC
 // --------------------------------------------------
 
 interface MetricItemProps {
@@ -162,14 +177,10 @@ function MetricItem({
             {value}
           </span>
 
-          <span className="text-xs text-slate-400">
-            {unit}
-          </span>
+          <span className="text-xs text-slate-400">{unit}</span>
         </div>
 
-        <p className="mt-1 text-xs text-slate-500">
-          {description}
-        </p>
+        <p className="mt-1 text-xs text-slate-500">{description}</p>
       </div>
     </div>
   );
@@ -179,15 +190,21 @@ function MetricItem({
 // ALERT ITEM
 // --------------------------------------------------
 
-function AlertItem({ alert }: { alert: HealthAlert }) {
+function AlertItem({
+  alert,
+  t,
+}: {
+  alert: HealthAlert;
+  t: Translate;
+}) {
   const status = normalizeStatus(alert.severity);
 
   const iconColor =
     status === "critical"
       ? "text-red-400"
       : status === "warning"
-      ? "text-amber-400"
-      : "text-slate-400";
+        ? "text-amber-400"
+        : "text-slate-400";
 
   return (
     <div className="flex items-start gap-4 border-b border-slate-800/80 py-4 last:border-0">
@@ -201,7 +218,7 @@ function AlertItem({ alert }: { alert: HealthAlert }) {
             {alert.title}
           </h4>
 
-          <StatusIndicator status={status} />
+          <StatusIndicator status={status} t={t} />
         </div>
 
         <p className="mt-1 text-sm leading-relaxed text-slate-400">
@@ -209,8 +226,10 @@ function AlertItem({ alert }: { alert: HealthAlert }) {
         </p>
 
         <p className="mt-2 text-xs text-slate-600">
-          Mission day {alert.mission_day} ·{" "}
-          {alert.phase ? formatPhase(alert.phase) : "Phase unavailable"}
+          {t("overview.missionDay")} {alert.mission_day} ·{" "}
+          {alert.phase
+            ? formatPhase(alert.phase)
+            : t("overview.phaseUnavailable")}
         </p>
       </div>
     </div>
@@ -226,11 +245,13 @@ function TimelineItem({
   selected,
   latest,
   onSelect,
+  t,
 }: {
   record: HealthRecord;
   selected: boolean;
   latest: boolean;
   onSelect: () => void;
+  t: Translate;
 }) {
   const status = normalizeStatus(record.Status);
 
@@ -241,6 +262,7 @@ function TimelineItem({
       className={`flex w-full items-center gap-4 border-b border-slate-800/70 py-4 text-left transition last:border-0 ${
         selected ? "bg-cyan-500/5" : "hover:bg-slate-800/30"
       }`}
+      aria-pressed={selected}
     >
       <div className="flex w-8 shrink-0 justify-center">
         <span
@@ -253,18 +275,18 @@ function TimelineItem({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-medium text-white">
-            Day {record.Mission_Day}
+            {t("overview.day")} {record.Mission_Day}
           </span>
 
           {selected && (
             <span className="text-xs text-cyan-400">
-              Selected
+              {t("overview.selected")}
             </span>
           )}
 
           {latest && (
             <span className="text-xs text-slate-500">
-              Latest
+              {t("overview.latest")}
             </span>
           )}
         </div>
@@ -274,7 +296,7 @@ function TimelineItem({
         </p>
       </div>
 
-      <StatusIndicator status={status} />
+      <StatusIndicator status={status} t={t} />
     </button>
   );
 }
@@ -284,17 +306,30 @@ function TimelineItem({
 // --------------------------------------------------
 
 export default function Overview() {
+  const { t } = usePreferences();
+
+  const { language } = usePreferences();
+
+  console.log("ASTRA language:", language);
+  console.log("ASTRA translation test:", t("overview.title"));
+
   const [health, setHealth] = useState<MyHealthResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
   const [alertsResponse, setAlertsResponse] =
     useState<MyAlertsResponse | null>(null);
   const [alertsLoading, setAlertsLoading] = useState(false);
   const [alertsError, setAlertsError] = useState<string | null>(null);
+
   const {
-  selectedMissionDay: selectedDay,
-  setSelectedMissionDay: setSelectedDay,
+    selectedMissionDay: selectedDay,
+    setSelectedMissionDay: setSelectedDay,
   } = useMissionDay();
+
+  // --------------------------------------------------
+  // LOAD HEALTH DATA
+  // --------------------------------------------------
 
   useEffect(() => {
     let active = true;
@@ -331,58 +366,62 @@ export default function Overview() {
     };
   }, []);
 
+  // --------------------------------------------------
+  // LOAD SELECTED DAY ALERTS
+  // --------------------------------------------------
+
   useEffect(() => {
-  if (!health || health.data.length === 0) {
-    setAlertsResponse(null);
-    return;
-  }
+    if (!health || health.data.length === 0) {
+      setAlertsResponse(null);
+      return;
+    }
 
-  let active = true;
+    let active = true;
 
-  async function loadSelectedDayAlerts() {
-    try {
-      setAlertsLoading(true);
-      setAlertsError(null);
+    async function loadSelectedDayAlerts() {
+      try {
+        setAlertsLoading(true);
+        setAlertsError(null);
 
-      const observations = [...(health?.data ?? [])].sort(
-        (a, b) => Number(a.Mission_Day) - Number(b.Mission_Day)
-      );
-
-      const latest = observations[observations.length - 1];
-
-      const selectedRecord =
-        observations.find(
-          (record) => Number(record.Mission_Day) === Number(selectedDay)
-        ) ?? latest;
-
-      const missionDay = Number(selectedRecord.Mission_Day);
-      const result = await getMyAlerts(missionDay);
-
-      if (active) {
-        setAlertsResponse(result);
-      }
-    } catch (err) {
-      if (active) {
-        setAlertsResponse(null);
-        setAlertsError(
-          err instanceof Error
-            ? err.message
-            : "Could not load alerts for this mission day."
+        const observations = [...(health?.data ?? [])].sort(
+          (a, b) => Number(a.Mission_Day) - Number(b.Mission_Day)
         );
-      }
-    } finally {
-      if (active) {
-        setAlertsLoading(false);
+
+        const latest = observations[observations.length - 1];
+
+        const selectedRecord =
+          observations.find(
+            (record) => Number(record.Mission_Day) === Number(selectedDay)
+          ) ?? latest;
+
+        const missionDay = Number(selectedRecord.Mission_Day);
+        const result = await getMyAlerts(missionDay);
+
+        if (active) {
+          setAlertsResponse(result);
+        }
+      } catch (err) {
+        if (active) {
+          setAlertsResponse(null);
+          setAlertsError(
+            err instanceof Error
+              ? err.message
+              : "Could not load alerts for this mission day."
+          );
+        }
+      } finally {
+        if (active) {
+          setAlertsLoading(false);
+        }
       }
     }
-  }
 
-  loadSelectedDayAlerts();
+    loadSelectedDayAlerts();
 
-  return () => {
-    active = false;
-  };
-}, [health, selectedDay]);
+    return () => {
+      active = false;
+    };
+  }, [health, selectedDay]);
 
   // --------------------------------------------------
   // LOADING AND ERROR STATES
@@ -392,7 +431,7 @@ export default function Overview() {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-slate-400">
         <Orbit size={34} className="mb-4 animate-spin text-cyan-400" />
-        <p>Initializing ASTRA health systems...</p>
+        <p>{t("overview.loading")}</p>
       </div>
     );
   }
@@ -402,9 +441,7 @@ export default function Overview() {
       <div className="flex items-center gap-3 py-10 text-red-400">
         <ShieldAlert size={24} />
         <div>
-          <p className="font-semibold">
-            Unable to load health dashboard
-          </p>
+          <p className="font-semibold">{t("overview.loadError")}</p>
           <p className="mt-1 text-sm">{error}</p>
         </div>
       </div>
@@ -414,7 +451,7 @@ export default function Overview() {
   if (!health || health.data.length === 0) {
     return (
       <p className="py-10 text-slate-400">
-        No astronaut health data is available.
+        {t("overview.noData")}
       </p>
     );
   }
@@ -428,7 +465,7 @@ export default function Overview() {
   );
 
   const missionDays = [
-    ...new Set(observations.map((record) => Number(record.Mission_Day)))
+    ...new Set(observations.map((record) => Number(record.Mission_Day))),
   ];
 
   const latest = observations[observations.length - 1];
@@ -447,12 +484,13 @@ export default function Overview() {
     Number(selectedRecord.Mission_Day) === Number(latest.Mission_Day);
 
   const currentStatus = normalizeStatus(selectedRecord.Status);
+
   // --------------------------------------------------
   // SELECTED DAY ALERTS
   // --------------------------------------------------
 
   const selectedAlerts: HealthAlert[] =
-  alertsResponse?.alerts ?? [];
+    alertsResponse?.alerts ?? [];
 
   const sortedAlerts = [...selectedAlerts].sort((a, b) => {
     const priority: Record<HealthStatus, number> = {
@@ -472,63 +510,63 @@ export default function Overview() {
   const indicators: MetricItemProps[] = [
     {
       icon: Moon,
-      label: "Sleep duration",
+      label: t("overview.sleep"),
       value: formatValue(
         getNumericValue(selectedRecord, "Sleep_Duration_hours"),
         2
       ),
-      unit: "hours",
-      description: "Recorded sleep duration",
+      unit: t("overview.hours"),
+      description: t("overview.recordedSleep"),
     },
     {
       icon: BatteryWarning,
-      label: "Fatigue",
+      label: t("overview.fatigue"),
       value: formatValue(
         getNumericValue(selectedRecord, "Fatigue_Score_0_10"),
         2
       ),
       unit: "/10",
-      description: "Reported fatigue score",
+      description: t("overview.fatigueScore"),
     },
     {
       icon: Dumbbell,
-      label: "Exercise adherence",
+      label: t("overview.exercise"),
       value: formatValue(
         getNumericValue(selectedRecord, "Exercise_Adherence_pct"),
         1
       ),
       unit: "%",
-      description: "Exercise adherence",
+      description: t("overview.exerciseDescription"),
     },
     {
       icon: Brain,
-      label: "Cognitive performance",
+      label: t("overview.cognition"),
       value: formatValue(
         getNumericValue(selectedRecord, "Cognitive_Performance_Index"),
         1
       ),
-      unit: "index",
-      description: "Cognitive performance measure",
+      unit: t("overview.index"),
+      description: t("overview.cognitionDescription"),
     },
     {
       icon: Wind,
-      label: "Cabin CO₂",
+      label: t("overview.cabinCo2"),
       value: formatValue(
         getNumericValue(selectedRecord, "Cabin_CO2_ppm"),
         1
       ),
       unit: "ppm",
-      description: "Environmental measurement",
+      description: t("overview.environmentalMeasurement"),
     },
     {
       icon: Thermometer,
-      label: "Body temperature",
+      label: t("overview.temperature"),
       value: formatValue(
         getNumericValue(selectedRecord, "Body_Temperature_C"),
         2
       ),
       unit: "°C",
-      description: "Recorded body temperature",
+      description: t("overview.recordedTemperature"),
     },
     {
       icon: Microscope,
@@ -538,11 +576,11 @@ export default function Overview() {
         2
       ),
       unit: "mg/L",
-      description: "Inflammation marker",
+      description: t("overview.inflammation"),
     },
     {
       icon: Bone,
-      label: "Bone density index",
+      label: t("overview.boneDensity"),
       value: formatValue(
         getNumericValue(
           selectedRecord,
@@ -551,11 +589,11 @@ export default function Overview() {
         1
       ),
       unit: "%",
-      description: "Relative to baseline",
+      description: t("overview.relativeBaseline"),
     },
     {
       icon: Activity,
-      label: "Muscle strength index",
+      label: t("overview.muscleStrength"),
       value: formatValue(
         getNumericValue(
           selectedRecord,
@@ -564,7 +602,7 @@ export default function Overview() {
         1
       ),
       unit: "%",
-      description: "Relative to baseline",
+      description: t("overview.relativeBaseline"),
     },
   ];
 
@@ -603,22 +641,21 @@ export default function Overview() {
 
   return (
     <div className="space-y-10">
-
       {/* HEADER */}
 
       <section className="flex flex-wrap items-center justify-between gap-5">
         <div>
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400">
             <Orbit size={15} />
-            ASTRA / Personal Health
+            {t("overview.personalHealth")}
           </p>
 
           <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white">
-            Mission Health Overview
+            {t("overview.title")}
           </h2>
 
           <p className="mt-2 text-sm text-slate-400">
-            Welcome, {health.display_name}
+            {t("overview.welcome")}, {health.display_name}
           </p>
         </div>
 
@@ -626,7 +663,7 @@ export default function Overview() {
           <UserRound size={18} />
           <div>
             <p className="text-xs uppercase tracking-wider text-slate-500">
-              Astronaut ID
+              {t("overview.astronautId")}
             </p>
             <p className="text-sm font-semibold text-white">
               {health.astronaut_id}
@@ -643,14 +680,11 @@ export default function Overview() {
 
           <div>
             <p className="text-sm font-semibold text-amber-300">
-              Synthetic demonstration profile
+              {t("overview.syntheticTitle")}
             </p>
 
             <p className="mt-1 text-xs leading-relaxed text-slate-400">
-              This dashboard displays simulated astronaut health data,
-              not actual astronaut measurements. Dataset-reported statuses
-              and alerts are illustrative and are not clinical diagnoses
-              or independently validated medical thresholds.
+              {t("overview.syntheticNotice")}
             </p>
           </div>
         </section>
@@ -660,16 +694,15 @@ export default function Overview() {
 
       <section className="border-y border-slate-800 py-6">
         <div className="flex flex-wrap items-center justify-between gap-6">
-
           <div>
             <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
               <CalendarDays size={15} />
-              Mission timeline navigator
+              {t("overview.navigator")}
             </p>
 
             <div className="mt-2 flex flex-wrap items-baseline gap-3">
               <h3 className="text-4xl font-semibold tracking-tight text-white">
-                Day {selectedRecord.Mission_Day}
+                {t("overview.day")} {selectedRecord.Mission_Day}
               </h3>
 
               <span className="text-sm capitalize text-slate-400">
@@ -678,30 +711,29 @@ export default function Overview() {
             </div>
 
             <div className="mt-2 flex items-center gap-2">
-              <StatusIndicator status={currentStatus} />
+              <StatusIndicator status={currentStatus} t={t} />
 
               {!isLatest && (
                 <span className="text-xs text-cyan-400">
-                  Historical observation
+                  {t("overview.historical")}
                 </span>
               )}
 
               {isLatest && (
                 <span className="text-xs text-slate-500">
-                  Latest observation
+                  {t("overview.latestObservation")}
                 </span>
               )}
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-
             <button
               type="button"
               onClick={selectPreviousDay}
               disabled={selectedIndex <= 0}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 text-slate-300 transition hover:border-cyan-500 hover:text-cyan-400 disabled:cursor-not-allowed disabled:opacity-30"
-              aria-label="Previous observation"
+              aria-label={t("overview.previous")}
             >
               <ChevronLeft size={20} />
             </button>
@@ -712,7 +744,7 @@ export default function Overview() {
                 setSelectedDay(Number(event.target.value))
               }
               className="h-10 rounded-lg border border-slate-700 bg-slate-900 px-4 text-sm text-white outline-none transition focus:border-cyan-500"
-              aria-label="Select mission day"
+              aria-label={t("overview.selectDay")}
             >
               {missionDays.map((day) => {
                 const record = observations.find(
@@ -721,7 +753,8 @@ export default function Overview() {
 
                 return (
                   <option key={day} value={day}>
-                    Day {day} · {record ? formatPhase(record.Phase) : ""}
+                    {t("overview.day")} {day} ·{" "}
+                    {record ? formatPhase(record.Phase) : ""}
                   </option>
                 );
               })}
@@ -732,7 +765,7 @@ export default function Overview() {
               onClick={selectNextDay}
               disabled={selectedIndex >= observations.length - 1}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 text-slate-300 transition hover:border-cyan-500 hover:text-cyan-400 disabled:cursor-not-allowed disabled:opacity-30"
-              aria-label="Next observation"
+              aria-label={t("overview.next")}
             >
               <ChevronRight size={20} />
             </button>
@@ -745,7 +778,7 @@ export default function Overview() {
                 }
                 className="text-xs font-medium text-cyan-400 transition hover:text-cyan-300"
               >
-                Latest day
+                {t("overview.latestDay")}
               </button>
             )}
           </div>
@@ -753,10 +786,11 @@ export default function Overview() {
 
         <div className="mt-5 flex items-center justify-between text-xs text-slate-500">
           <span>
-            Observation {selectedIndex + 1} of {observations.length}
+            {t("overview.observation")} {selectedIndex + 1}{" "}
+            {t("overview.of")} {observations.length}
           </span>
           <span>
-            {missionDays.length} available mission days
+            {missionDays.length} {t("overview.availableDays")}
           </span>
         </div>
 
@@ -777,17 +811,16 @@ export default function Overview() {
       {/* STATUS SUMMARY */}
 
       <section className="grid grid-cols-2 gap-6 border-b border-slate-800 pb-7 md:grid-cols-4">
-
         <div>
           <div className="mb-3 flex items-center gap-2 text-slate-500">
             <CircleDot size={17} />
             <span className="text-xs uppercase tracking-wider">
-              Dataset status
+              {t("overview.datasetStatus")}
             </span>
           </div>
-          <StatusIndicator status={currentStatus} />
+          <StatusIndicator status={currentStatus} t={t} />
           <p className="mt-2 text-xs text-slate-500">
-            Selected observation
+            {t("overview.selectedObservation")}
           </p>
         </div>
 
@@ -795,14 +828,14 @@ export default function Overview() {
           <div className="mb-3 flex items-center gap-2 text-slate-500">
             <ShieldAlert size={17} />
             <span className="text-xs uppercase tracking-wider">
-              Reported flags
+              {t("overview.reportedFlags")}
             </span>
           </div>
           <p className="text-2xl font-semibold text-white">
             {sortedAlerts.length}
           </p>
           <p className="mt-2 text-xs text-slate-500">
-            Selected observation
+            {t("overview.selectedObservation")}
           </p>
         </div>
 
@@ -810,7 +843,7 @@ export default function Overview() {
           <div className="mb-3 flex items-center gap-2 text-slate-500">
             <Clock3 size={17} />
             <span className="text-xs uppercase tracking-wider">
-              Mission day
+              {t("overview.missionDay")}
             </span>
           </div>
           <p className="text-2xl font-semibold text-white">
@@ -825,17 +858,16 @@ export default function Overview() {
           <div className="mb-3 flex items-center gap-2 text-slate-500">
             <Database size={17} />
             <span className="text-xs uppercase tracking-wider">
-              Observations
+              {t("overview.observations")}
             </span>
           </div>
           <p className="text-2xl font-semibold text-white">
             {health.observations}
           </p>
           <p className="mt-2 text-xs text-slate-500">
-            Personal records
+            {t("overview.personalRecords")}
           </p>
         </div>
-
       </section>
 
       {/* HEALTH INDICATORS */}
@@ -844,26 +876,23 @@ export default function Overview() {
         <div className="mb-4">
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-cyan-400">
             <Activity size={16} />
-            Health systems
+            {t("overview.healthSystems")}
           </p>
 
           <h3 className="mt-2 text-xl font-semibold text-white">
-            Physiological and environmental indicators
+            {t("overview.indicators")}
           </h3>
 
           <p className="mt-1 text-sm text-slate-500">
-            Measurements recorded on mission day {selectedRecord.Mission_Day}.
-            Values are displayed as recorded and are not independently
-            classified as clinically normal or abnormal.
+            {t("overview.measurementsRecorded")}{" "}
+            {selectedRecord.Mission_Day}.{" "}
+            {t("overview.notClinicallyClassified")}
           </p>
         </div>
 
         <div className="grid grid-cols-1 divide-y divide-slate-800/70 sm:grid-cols-2 sm:gap-x-10 sm:divide-y-0 xl:grid-cols-3">
           {indicators.map((indicator) => (
-            <MetricItem
-              key={indicator.label}
-              {...indicator}
-            />
+            <MetricItem key={indicator.label} {...indicator} />
           ))}
         </div>
       </section>
@@ -874,62 +903,62 @@ export default function Overview() {
         <div className="mb-3">
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-cyan-400">
             <ShieldAlert size={16} />
-            Health flags
+            {t("overview.healthFlags")}
           </p>
 
           <h3 className="mt-2 text-xl font-semibold text-white">
-            Observation-specific alerts
+            {t("overview.alertsTitle")}
           </h3>
 
           <p className="mt-1 text-sm text-slate-500">
-            Dataset-reported flags for mission day {selectedRecord.Mission_Day}.
+            {t("overview.datasetFlags")} {selectedRecord.Mission_Day}.
           </p>
         </div>
 
         {alertsLoading ? (
-  <div className="flex items-center gap-3 py-5 text-slate-400">
-    <Orbit size={18} className="animate-spin text-cyan-400" />
-    <p className="text-sm">
-      Retrieving flags for mission day {selectedRecord.Mission_Day}...
-    </p>
-  </div>
-) : alertsError ? (
-  <div className="flex items-start gap-3 py-5">
-    <ShieldAlert size={20} className="mt-0.5 text-amber-400" />
-    <div>
-      <p className="text-sm font-medium text-amber-300">
-        Unable to retrieve observation flags.
-      </p>
-      <p className="mt-1 text-xs text-slate-500">
-        {alertsError}
-      </p>
-    </div>
-  </div>
-) : sortedAlerts.length > 0 ? (
-  <div>
-    {sortedAlerts.map((alert, index) => (
-      <AlertItem
-        key={`${alert.mission_day}-${alert.title}-${index}`}
-        alert={alert}
-      />
-    ))}
-  </div>
-) : (
-  <div className="flex items-start gap-3 py-5">
-    <CircleDot size={20} className="mt-0.5 text-emerald-400" />
+          <div className="flex items-center gap-3 py-5 text-slate-400">
+            <Orbit size={18} className="animate-spin text-cyan-400" />
+            <p className="text-sm">
+              {t("overview.retrievingFlags")} {selectedRecord.Mission_Day}...
+            </p>
+          </div>
+        ) : alertsError ? (
+          <div className="flex items-start gap-3 py-5">
+            <ShieldAlert size={20} className="mt-0.5 text-amber-400" />
+            <div>
+              <p className="text-sm font-medium text-amber-300">
+                {t("overview.alertsError")}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                {alertsError}
+              </p>
+            </div>
+          </div>
+        ) : sortedAlerts.length > 0 ? (
+          <div>
+            {sortedAlerts.map((alert, index) => (
+              <AlertItem
+                key={`${alert.mission_day}-${alert.title}-${index}`}
+                alert={alert}
+                t={t}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-start gap-3 py-5">
+            <CircleDot size={20} className="mt-0.5 text-emerald-400" />
 
-    <div>
-      <p className="text-sm font-medium text-slate-200">
-        No dataset-reported flags for this observation.
-      </p>
+            <div>
+              <p className="text-sm font-medium text-slate-200">
+                {t("overview.noFlags")}
+              </p>
 
-      <p className="mt-1 text-xs text-slate-500">
-        This does not independently establish that all health
-        measurements are clinically normal.
-      </p>
-    </div>
-  </div>
-)}
+              <p className="mt-1 text-xs text-slate-500">
+                {t("overview.noFlagsDisclaimer")}
+              </p>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* TIMELINE */}
@@ -938,16 +967,15 @@ export default function Overview() {
         <div className="mb-4">
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-cyan-400">
             <Orbit size={16} />
-            Mission history
+            {t("overview.missionHistory")}
           </p>
 
           <h3 className="mt-2 text-xl font-semibold text-white">
-            Observation timeline
+            {t("overview.timeline")}
           </h3>
 
           <p className="mt-1 text-sm text-slate-500">
-            Select an observation to navigate to that day. Showing up to
-            five observations up to the selected day.
+            {t("overview.timelineDescription")}
           </p>
         </div>
 
@@ -967,6 +995,7 @@ export default function Overview() {
               onSelect={() =>
                 setSelectedDay(Number(record.Mission_Day))
               }
+              t={t}
             />
           ))}
         </div>
@@ -977,17 +1006,21 @@ export default function Overview() {
       <section className="border-t border-slate-800 pt-7">
         <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-cyan-400">
           <Database size={16} />
-          Data provenance
+          {t("overview.dataProvenance")}
         </p>
 
         <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
-
           <div className="flex items-start gap-3">
             <Database size={18} className="mt-0.5 text-slate-500" />
             <div>
-              <p className="text-xs text-slate-500">Data origin</p>
+              <p className="text-xs text-slate-500">
+                {t("overview.dataOrigin")}
+              </p>
               <p className="mt-1 text-sm text-slate-200">
-                {formatDataOrigin(health.data_origin)}
+                {formatDataOrigin(
+                  health.data_origin,
+                  t("overview.notSpecified")
+                )}
               </p>
             </div>
           </div>
@@ -996,7 +1029,7 @@ export default function Overview() {
             <UserRound size={18} className="mt-0.5 text-slate-500" />
             <div>
               <p className="text-xs text-slate-500">
-                Dataset astronaut ID
+                {t("overview.datasetAstronautId")}
               </p>
               <p className="mt-1 text-sm text-slate-200">
                 {health.dataset_subject_id}
@@ -1008,25 +1041,21 @@ export default function Overview() {
             <Activity size={18} className="mt-0.5 text-slate-500" />
             <div>
               <p className="text-xs text-slate-500">
-                Observations analyzed
+                {t("overview.analyzed")}
               </p>
               <p className="mt-1 text-sm text-slate-200">
                 {health.observations}
               </p>
             </div>
           </div>
-
         </div>
 
         {health.is_synthetic && (
           <p className="mt-5 border-t border-slate-800 pt-4 text-xs leading-relaxed text-slate-500">
-            All displayed health observations belong to a synthetic
-            demonstration dataset. They should not be used to make
-            real medical or operational decisions.
+            {t("overview.syntheticDisclaimer")}
           </p>
         )}
       </section>
-
     </div>
   );
 }

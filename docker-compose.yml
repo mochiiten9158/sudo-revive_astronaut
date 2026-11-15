@@ -35,6 +35,9 @@ services:
       DB_HOST: db
       DB_PORT: 5432
 
+    ports:
+      - "127.0.0.1:8000:8000"
+
     depends_on:
       db:
         condition: service_healthy

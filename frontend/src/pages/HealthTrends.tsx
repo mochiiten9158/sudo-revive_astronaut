@@ -23,185 +23,191 @@ import {
 
 import { getMyHealthData } from "../services/api";
 import { useMissionDay } from "../context/MissionDayContext";
+import { usePreferences } from "../context/PreferencesContext";
 
 import type {
   HealthRecord,
   MyHealthResponse,
 } from "../types/health";
 
+import type { TranslationKey } from "../i18n/translations";
+
 type MetricDefinition = {
   key: string;
-  label: string;
+  labelKey: TranslationKey;
+  descriptionKey: TranslationKey;
   unit: string;
-  category: string;
-  description: string;
+  categoryKey: TranslationKey;
   decimals: number;
 };
 
 const metrics: MetricDefinition[] = [
   {
     key: "Sleep_Duration_hours",
-    label: "Sleep duration",
+    labelKey: "trends.sleepDuration",
+    descriptionKey: "trends.sleepDurationDescription",
     unit: "hours",
-    category: "Behavioral",
-    description: "Recorded sleep duration per observation.",
+    categoryKey: "trends.behavioral",
     decimals: 1,
   },
   {
     key: "Sleep_Efficiency_pct",
-    label: "Sleep efficiency",
+    labelKey: "trends.sleepEfficiency",
+    descriptionKey: "trends.sleepEfficiencyDescription",
     unit: "%",
-    category: "Behavioral",
-    description: "Percentage of time asleep during the sleep period.",
+    categoryKey: "trends.behavioral",
     decimals: 1,
   },
   {
     key: "Fatigue_Score_0_10",
-    label: "Fatigue",
+    labelKey: "trends.fatigue",
+    descriptionKey: "trends.fatigueDescription",
     unit: "/10",
-    category: "Behavioral",
-    description: "Recorded subjective fatigue score.",
+    categoryKey: "trends.behavioral",
     decimals: 1,
   },
   {
     key: "Stress_Score_0_10",
-    label: "Stress",
+    labelKey: "trends.stress",
+    descriptionKey: "trends.stressDescription",
     unit: "/10",
-    category: "Behavioral",
-    description: "Recorded subjective stress score.",
+    categoryKey: "trends.behavioral",
     decimals: 1,
   },
   {
     key: "Cognitive_Performance_Index",
-    label: "Cognitive performance",
+    labelKey: "trends.cognitivePerformance",
+    descriptionKey: "trends.cognitivePerformanceDescription",
     unit: "index",
-    category: "Behavioral",
-    description: "Recorded cognitive performance index.",
+    categoryKey: "trends.behavioral",
     decimals: 2,
   },
   {
     key: "Resting_HR_bpm",
-    label: "Resting heart rate",
+    labelKey: "trends.restingHeartRate",
+    descriptionKey: "trends.restingHeartRateDescription",
     unit: "bpm",
-    category: "Cardiovascular",
-    description: "Recorded resting heart rate.",
+    categoryKey: "trends.cardiovascular",
     decimals: 1,
   },
   {
     key: "Systolic_BP_mmHg",
-    label: "Systolic blood pressure",
+    labelKey: "trends.systolicBP",
+    descriptionKey: "trends.systolicBPDescription",
     unit: "mmHg",
-    category: "Cardiovascular",
-    description: "Recorded systolic blood pressure.",
+    categoryKey: "trends.cardiovascular",
     decimals: 1,
   },
   {
     key: "Diastolic_BP_mmHg",
-    label: "Diastolic blood pressure",
+    labelKey: "trends.diastolicBP",
+    descriptionKey: "trends.diastolicBPDescription",
     unit: "mmHg",
-    category: "Cardiovascular",
-    description: "Recorded diastolic blood pressure.",
+    categoryKey: "trends.cardiovascular",
     decimals: 1,
   },
   {
     key: "SpO2_pct",
-    label: "Blood oxygen saturation",
+    labelKey: "trends.bloodOxygen",
+    descriptionKey: "trends.bloodOxygenDescription",
     unit: "%",
-    category: "Cardiovascular",
-    description: "Recorded peripheral oxygen saturation.",
+    categoryKey: "trends.cardiovascular",
     decimals: 1,
   },
   {
     key: "Bone_Density_Index_pct_Baseline",
-    label: "Bone density index",
+    labelKey: "trends.boneDensity",
+    descriptionKey: "trends.boneDensityDescription",
     unit: "% of baseline",
-    category: "Physical",
-    description: "Bone density relative to the recorded baseline.",
+    categoryKey: "trends.physical",
     decimals: 1,
   },
   {
     key: "Muscle_Mass_Index_pct_Baseline",
-    label: "Muscle mass index",
+    labelKey: "trends.muscleMass",
+    descriptionKey: "trends.muscleMassDescription",
     unit: "% of baseline",
-    category: "Physical",
-    description: "Muscle mass relative to the recorded baseline.",
+    categoryKey: "trends.physical",
     decimals: 1,
   },
   {
     key: "Muscle_Strength_Index_pct_Baseline",
-    label: "Muscle strength index",
+    labelKey: "trends.muscleStrength",
+    descriptionKey: "trends.muscleStrengthDescription",
     unit: "% of baseline",
-    category: "Physical",
-    description: "Muscle strength relative to the recorded baseline.",
+    categoryKey: "trends.physical",
     decimals: 1,
   },
   {
     key: "VO2max_Index_pct_Baseline",
-    label: "VO2 max index",
+    labelKey: "trends.vo2max",
+    descriptionKey: "trends.vo2maxDescription",
     unit: "% of baseline",
-    category: "Physical",
-    description: "Aerobic capacity relative to the recorded baseline.",
+    categoryKey: "trends.physical",
     decimals: 1,
   },
   {
     key: "Exercise_Adherence_pct",
-    label: "Exercise adherence",
+    labelKey: "trends.exerciseAdherence",
+    descriptionKey: "trends.exerciseAdherenceDescription",
     unit: "%",
-    category: "Physical",
-    description: "Recorded adherence to the exercise program.",
+    categoryKey: "trends.physical",
     decimals: 1,
   },
   {
     key: "Daily_Radiation_mSv",
-    label: "Daily radiation",
+    labelKey: "trends.dailyRadiation",
+    descriptionKey: "trends.dailyRadiationDescription",
     unit: "mSv",
-    category: "Radiation",
-    description: "Recorded daily radiation exposure.",
+    categoryKey: "trends.radiation",
     decimals: 3,
   },
   {
     key: "Cumulative_Mission_Dose_mSv",
-    label: "Cumulative mission dose",
+    labelKey: "trends.cumulativeRadiation",
+    descriptionKey: "trends.cumulativeRadiationDescription",
     unit: "mSv",
-    category: "Radiation",
-    description: "Recorded cumulative mission radiation dose.",
+    categoryKey: "trends.radiation",
     decimals: 2,
   },
   {
     key: "Career_Dose_Pct_of_600mSv_Limit",
-    label: "Career dose",
+    labelKey: "trends.careerDose",
+    descriptionKey: "trends.careerDoseDescription",
     unit: "% of reference limit",
-    category: "Radiation",
-    description: "Recorded career dose as a percentage of the dataset's 600 mSv reference limit.",
+    categoryKey: "trends.radiation",
     decimals: 1,
   },
   {
     key: "Vitamin_D_ng_mL",
-    label: "Vitamin D",
+    labelKey: "trends.vitaminD",
+    descriptionKey: "trends.vitaminDDescription",
     unit: "ng/mL",
-    category: "Nutrition",
-    description: "Recorded vitamin D measurement.",
+    categoryKey: "trends.nutrition",
     decimals: 1,
   },
   {
     key: "Homocysteine_umol_L",
-    label: "Homocysteine",
+    labelKey: "trends.homocysteine",
+    descriptionKey: "trends.homocysteineDescription",
     unit: "µmol/L",
-    category: "Nutrition",
-    description: "Recorded homocysteine measurement.",
+    categoryKey: "trends.nutrition",
     decimals: 2,
   },
   {
     key: "CRP_mg_L",
-    label: "C-reactive protein",
+    labelKey: "trends.crp",
+    descriptionKey: "trends.crpDescription",
     unit: "mg/L",
-    category: "Immune",
-    description: "Recorded C-reactive protein measurement.",
+    categoryKey: "trends.immune",
     decimals: 2,
   },
 ];
 
-function numericValue(record: HealthRecord, key: string): number | null {
+function numericValue(
+  record: HealthRecord,
+  key: string
+): number | null {
   const raw = record[key];
 
   if (typeof raw === "number" && Number.isFinite(raw)) {
@@ -229,7 +235,20 @@ function phaseLabel(phase: string): string {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
+function translatedUnit(
+  unit: string,
+  t: (key: TranslationKey) => string
+): string {
+  if (unit === "hours") return t("trends.hours");
+  if (unit === "index") return t("trends.index");
+  if (unit === "% of baseline") return t("trends.percentBaseline");
+  if (unit === "% of reference limit") return t("trends.percentReference");
+  return unit;
+}
+
 export default function HealthTrends() {
+  const { t } = usePreferences();
+
   const [health, setHealth] = useState<MyHealthResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -291,9 +310,8 @@ export default function HealthTrends() {
         Number(record.Mission_Day) === Number(selectedMissionDay)
     ) ?? latest;
 
-  const metric = metrics.find(
-    (item) => item.key === selectedMetric
-  ) ?? metrics[0];
+  const metric =
+    metrics.find((item) => item.key === selectedMetric) ?? metrics[0];
 
   const chartData = useMemo(
     () =>
@@ -332,13 +350,18 @@ export default function HealthTrends() {
     (point) => point.value !== null
   ).length;
 
-  const categories = [...new Set(metrics.map((item) => item.category))];
+  const categories = [
+    ...new Set(metrics.map((item) => item.categoryKey)),
+  ];
+
+  const unit = translatedUnit(metric.unit, t);
+  const metricLabel = t(metric.labelKey);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center gap-3 py-24 text-slate-400">
         <Orbit size={25} className="animate-spin text-cyan-400" />
-        Loading longitudinal health observations...
+        {t("trends.loading")}
       </div>
     );
   }
@@ -346,7 +369,7 @@ export default function HealthTrends() {
   if (error) {
     return (
       <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-6 text-red-300">
-        Unable to load health trends: {error}
+        {t("trends.loadError")}: {error}
       </div>
     );
   }
@@ -354,7 +377,7 @@ export default function HealthTrends() {
   if (!health || observations.length === 0) {
     return (
       <p className="py-12 text-slate-400">
-        No health observations are available.
+        {t("trends.noData")}
       </p>
     );
   }
@@ -364,38 +387,37 @@ export default function HealthTrends() {
       <header>
         <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-cyan-400">
           <Activity size={16} />
-          Longitudinal monitoring
+          {t("trends.monitoring")}
         </p>
 
         <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-3xl font-semibold text-white">
-              Health Trends
+              {t("trends.title")}
             </h2>
             <p className="mt-2 text-sm text-slate-400">
-              Explore how your recorded health measurements change
-              throughout your mission.
+              {t("trends.description")}
             </p>
           </div>
 
           <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-300">
-            {observations.length} observations
+            {observations.length} {t("trends.observations")}
           </span>
         </div>
       </header>
 
       <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
         <div className="flex items-start gap-3">
-          <Database size={18} className="mt-0.5 shrink-0 text-amber-400" />
+          <Database
+            size={18}
+            className="mt-0.5 shrink-0 text-amber-400"
+          />
           <div>
             <p className="text-sm font-medium text-amber-300">
-              Synthetic demonstration dataset
+              {t("trends.syntheticTitle")}
             </p>
             <p className="mt-1 text-xs leading-relaxed text-slate-400">
-              These observations are simulated using NASA-sourced
-              parameter ranges. They are not actual astronaut telemetry
-              or clinical measurements. Missing observations are not
-              interpolated.
+              {t("trends.syntheticNotice")}
             </p>
           </div>
         </div>
@@ -404,36 +426,36 @@ export default function HealthTrends() {
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
           <p className="text-xs uppercase tracking-wider text-slate-500">
-            Selected observation
+            {t("trends.selectedObservation")}
           </p>
           <p className="mt-2 text-2xl font-semibold text-white">
-            Day {selectedRecord?.Mission_Day ?? "—"}
+            {t("trends.day")} {selectedRecord?.Mission_Day ?? "—"}
           </p>
           <p className="mt-1 text-xs text-slate-500">
             {selectedRecord
               ? phaseLabel(selectedRecord.Phase)
-              : "Phase unavailable"}
+              : t("trends.phaseUnavailable")}
           </p>
         </div>
 
         <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
           <p className="text-xs uppercase tracking-wider text-slate-500">
-            Recorded metric value
+            {t("trends.recordedMetric")}
           </p>
           <p className="mt-2 text-2xl font-semibold text-white">
             {formatValue(selectedValue, metric.decimals)}
             <span className="ml-2 text-sm font-normal text-slate-400">
-              {metric.unit}
+              {unit}
             </span>
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            {metric.label}
+            {metricLabel}
           </p>
         </div>
 
         <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
           <p className="text-xs uppercase tracking-wider text-slate-500">
-            Change from pre-flight average
+            {t("trends.changeFromBaseline")}
           </p>
 
           <div className="mt-2 flex items-center gap-2">
@@ -458,10 +480,10 @@ export default function HealthTrends() {
 
           <p className="mt-1 text-xs text-slate-500">
             {baselineAverage === null
-              ? "No pre-flight reference available"
-              : `Reference average: ${baselineAverage.toFixed(
+              ? t("trends.noBaseline")
+              : `${t("trends.referenceAverage")}: ${baselineAverage.toFixed(
                   metric.decimals
-                )} ${metric.unit}`}
+                )} ${unit}`}
           </p>
         </div>
       </section>
@@ -470,19 +492,19 @@ export default function HealthTrends() {
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-cyan-400">
-              Metric explorer
+              {t("trends.metricExplorer")}
             </p>
             <h3 className="mt-2 text-xl font-semibold text-white">
-              Observation history
+              {t("trends.history")}
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              {metric.description}
+              {t(metric.descriptionKey)}
             </p>
           </div>
 
           <div className="flex flex-col gap-2 sm:flex-row">
             <label className="flex flex-col gap-1 text-xs text-slate-400">
-              Metric
+              {t("trends.metric")}
               <select
                 value={selectedMetric}
                 onChange={(event) =>
@@ -490,13 +512,18 @@ export default function HealthTrends() {
                 }
                 className="min-w-52 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-cyan-500"
               >
-                {categories.map((category) => (
-                  <optgroup key={category} label={category}>
+                {categories.map((categoryKey) => (
+                  <optgroup
+                    key={categoryKey}
+                    label={t(categoryKey)}
+                  >
                     {metrics
-                      .filter((item) => item.category === category)
+                      .filter(
+                        (item) => item.categoryKey === categoryKey
+                      )
                       .map((item) => (
                         <option key={item.key} value={item.key}>
-                          {item.label}
+                          {t(item.labelKey)}
                         </option>
                       ))}
                   </optgroup>
@@ -505,7 +532,7 @@ export default function HealthTrends() {
             </label>
 
             <label className="flex flex-col gap-1 text-xs text-slate-400">
-              Selected mission day
+              {t("trends.selectedMissionDay")}
               <select
                 value={
                   selectedRecord
@@ -526,7 +553,7 @@ export default function HealthTrends() {
                     key={record.Mission_Day}
                     value={record.Mission_Day}
                   >
-                    Day {record.Mission_Day}
+                    {t("trends.day")} {record.Mission_Day}
                   </option>
                 ))}
               </select>
@@ -574,13 +601,13 @@ export default function HealthTrends() {
                 labelStyle={{ color: "#94a3b8" }}
                 formatter={(value) => [
                   value === null || value === undefined
-                    ? "No observation"
-                    : `${Number(value).toFixed(metric.decimals)} ${metric.unit}`,
-                  metric.label,
+                    ? t("trends.noObservation")
+                    : `${Number(value).toFixed(metric.decimals)} ${unit}`,
+                  metricLabel,
                 ]}
                 labelFormatter={(value, payload) => {
                   const phase = payload?.[0]?.payload?.phase;
-                  return `Mission day ${value}${
+                  return `${t("trends.missionDay")} ${value}${
                     phase ? ` · ${phase}` : ""
                   }`;
                 }}
@@ -592,7 +619,7 @@ export default function HealthTrends() {
                   stroke="#a78bfa"
                   strokeDasharray="5 5"
                   label={{
-                    value: "Pre-flight average",
+                    value: t("trends.preflightAverage"),
                     fill: "#c4b5fd",
                     fontSize: 10,
                     position: "insideTopRight",
@@ -611,7 +638,7 @@ export default function HealthTrends() {
               <Line
                 type="monotone"
                 dataKey="value"
-                name={metric.label}
+                name={metricLabel}
                 stroke="#22d3ee"
                 strokeWidth={2.5}
                 dot={{ r: 3, fill: "#22d3ee", strokeWidth: 0 }}
@@ -626,22 +653,21 @@ export default function HealthTrends() {
         <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-slate-800 pt-4">
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <span className="h-0.5 w-5 bg-cyan-400" />
-            Recorded measurements
+            {t("trends.recordedMeasurements")}
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <span className="h-0.5 w-5 border-t-2 border-dashed border-violet-400" />
-            Pre-flight average
+            {t("trends.preflightAverage")}
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <span className="h-0.5 w-5 border-t-2 border-dashed border-cyan-300" />
-            Selected observation
+            {t("trends.selectedObservationLegend")}
           </div>
         </div>
 
         <p className="mt-4 text-xs text-slate-500">
-          {availableCount} of {observations.length} observations contain
-          a numeric value for this metric. The chart shows recorded
-          observations only; gaps are not filled or interpolated.
+          {t("trends.numericCoverage")}: {availableCount} /{" "}
+          {observations.length}. {t("trends.numericCoverageEnd")}
         </p>
       </section>
 
@@ -649,7 +675,7 @@ export default function HealthTrends() {
         <div className="flex items-center gap-2">
           <CalendarDays size={18} className="text-cyan-400" />
           <h3 className="font-semibold text-white">
-            Observation coverage
+            {t("trends.coverage")}
           </h3>
         </div>
 
@@ -667,6 +693,7 @@ export default function HealthTrends() {
                   setSelectedMissionDay(Number(record.Mission_Day))
                 }
                 title={`${phaseLabel(record.Phase)} · ${record.Status}`}
+                aria-pressed={selected}
                 className={`flex flex-col items-center gap-1 rounded-lg border px-3 py-2 transition ${
                   selected
                     ? "border-cyan-400 bg-cyan-500/10"
@@ -693,15 +720,12 @@ export default function HealthTrends() {
         </div>
 
         <p className="mt-4 text-xs text-slate-500">
-          Select an observation to synchronize the mission-day context
-          across ASTRA.
+          {t("trends.coverageDescription")}
         </p>
       </section>
 
       <p className="text-xs leading-relaxed text-slate-600">
-        These visualizations describe the supplied synthetic dataset.
-        A change from a pre-flight average is descriptive, not a
-        clinical assessment or diagnosis.
+        {t("trends.disclaimer")}
       </p>
     </div>
   );
