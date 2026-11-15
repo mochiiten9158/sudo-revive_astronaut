@@ -1,148 +1,47 @@
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException
 import pandas as pd
 
-from app.services.data_service import (
-    get_integrated_data,
-    get_participants,
-    get_subject_data,
-    get_cardiovascular_data,
-    get_cardiovascular_metrics,
-    get_cardiovascular_summary
-)
-
-router = APIRouter(
-    prefix="/api/health",
-    tags=["Health"]
-)
+from app.core.dependencies import get_current_astronaut
+from app.services.data_service import get_astronaut_data
 
 
-# --------------------------------------------------
-# HELPER: CLEAN NaN VALUES FOR JSON
-# --------------------------------------------------
+router = APIRouter(prefix="/api/health", tags=["Health"])
 
-def dataframe_to_records(data):
 
-    clean_data = data.astype(object).where(
-        pd.notna(data),
-        None
-    )
-
+def dataframe_to_records(data: pd.DataFrame):
+    clean_data = data.astype(object).where(pd.notna(data), None)
     return clean_data.to_dict(orient="records")
 
 
-# --------------------------------------------------
-# GENERAL HEALTH ENDPOINTS
-# --------------------------------------------------
+@router.get("/me")
+def get_my_health_data(
+    astronaut=Depends(get_current_astronaut),
+):
+    dataset_id = astronaut.dataset_subject_id
 
-@router.get("/overview")
-def get_health_overview():
-
-    data = get_integrated_data()
-
-    return {
-        "participants": int(
-            data["Subject"].nunique()
-        ),
-        "observations": len(data),
-        "health_domains": [
-            "Cardiovascular",
-            "Musculoskeletal",
-            "Behavioral",
-            "Radiation and Environment",
-            "Immune"
-        ],
-        "synthetic_records": int(
-            data["Is_Synthetic"].sum()
+    if not dataset_id:
+        raise HTTPException(
+            status_code=409,
+            detail="No health dataset is linked to this astronaut account.",
         )
-    }
 
-
-@router.get("/participants")
-def list_participants():
-
-    return {
-        "participants": get_participants()
-    }
-
-
-@router.get("/participants/{subject_id}")
-def participant_health(subject_id: int):
-
-    data = get_subject_data(subject_id)
+    data = get_astronaut_data(dataset_id)
 
     if data.empty:
         raise HTTPException(
             status_code=404,
-            detail="Participant not found"
+            detail="No health observations found for this astronaut.",
         )
 
-    return dataframe_to_records(data)
+    synthetic_values = data["Is_Synthetic"].fillna(False).astype(bool)
 
-
-# --------------------------------------------------
-# CARDIOVASCULAR ENDPOINTS
-# NASA 2D ECHOCARDIOGRAPHY DATA
-# --------------------------------------------------
-
-@router.get("/cardiovascular/data")
-def cardiovascular_data():
-
-    try:
-        data = get_cardiovascular_data()
-
-        return {
-            "source": "NASA 2D echocardiography dataset",
-            "observations": len(data),
-            "data": dataframe_to_records(data)
-        }
-
-    except FileNotFoundError as error:
-        raise HTTPException(
-            status_code=500,
-            detail=str(error)
-        )
-
-
-@router.get("/cardiovascular/metrics")
-def cardiovascular_metrics():
-
-    try:
-        return {
-            "metrics": get_cardiovascular_metrics()
-        }
-
-    except FileNotFoundError as error:
-        raise HTTPException(
-            status_code=500,
-            detail=str(error)
-        )
-
-
-@router.get("/cardiovascular/summary")
-def cardiovascular_summary(
-    metric: str = Query(
-        ...,
-        description="Exact cardiovascular measurement column name"
-    )
-):
-
-    try:
-        summary = get_cardiovascular_summary(metric)
-
-        return {
-            "metric": metric,
-            "groups": summary
-        }
-
-    except ValueError as error:
-        raise HTTPException(
-            status_code=400,
-            detail=str(error)
-        )
-
-    except FileNotFoundError as error:
-        raise HTTPException(
-            status_code=500,
-            detail=str(error)
-        )
+    return {
+        "astronaut_id": astronaut.astronaut_code,
+        "display_name": astronaut.display_name,
+        "dataset_subject_id": dataset_id,
+        "observations": len(data),
+        "data_origin": data["Data_Origin"].dropna().unique().tolist(),
+        "is_synthetic": bool(synthetic_values.all()),
+        "data": dataframe_to_records(data),
+    }

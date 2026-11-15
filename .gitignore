@@ -1,21 +1,38 @@
 
+# Environment secrets
+.env
+.env.*
+!.env.example
+
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
 venv/
-.env
+.venv/
 
 # Node
 node_modules/
 dist/
-
-# Generated files
-*.log
-.DS_Store
+.vite/
 
 # Local databases
 *.db
-*.sqlite3
 
-# Sensitive or restricted research data
-data/raw/*
+# Local database backups
+*.dump
+*.sql
+*.sqlite
+
+# Docker image exports
+*.tar
+*.tar.gz
+
+# Python and test artifacts
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.coverage
+
+# Logs
+*.log
