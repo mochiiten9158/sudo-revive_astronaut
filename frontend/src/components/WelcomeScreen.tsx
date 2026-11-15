@@ -1,8 +1,8 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
-import logo from "../assets/logo.png";
-import background from "../assets/background.jpg";
+import logo from "../assets/logo_with_words.png";
+import background from "../assets/background.png";
 import introMusic from "../assets/ObservingTheStar.ogg";
 
 import { usePreferences } from "../context/PreferencesContext";
@@ -286,8 +286,6 @@ export default function WelcomeScreen({
           src={logo}
           alt="ASTRA logo"
         />
-
-        <h1>ASTRA</h1>
 
         <h2>{t("welcome.subtitle")}</h2>
 

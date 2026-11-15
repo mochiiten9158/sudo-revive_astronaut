@@ -1,26 +1,46 @@
+
 @import "tailwindcss";
 
 :root {
   font-family: Inter, system-ui, sans-serif;
-  color: #e8eef8;
-  background: #08111f;
-
+  color: #e8f1ff;
+  background: #050a18;
   font-size: 100%;
   color-scheme: dark;
+
+  /* ASTRA brand palette */
+  --astra-background: #050a18;
+  --astra-sidebar: #080f22;
+  --astra-surface: #0d1830;
+  --astra-surface-hover: #142440;
+  --astra-border: #1b2b48;
+
+  --astra-cyan: #22d3ee;
+  --astra-blue: #70baff;
+  --astra-text: #e8f1ff;
+  --astra-muted: #8da4c4;
+
+  --astra-success: #00d6a0;
+  --astra-warning: #ffc928;
+  --astra-danger: #fb7185;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  background: var(--astra-background);
+}
+
 body {
   margin: 0;
   min-width: 320px;
+  background: var(--astra-background);
+  color: var(--astra-text);
 }
 
-/* -----------------------------------------
-   GLOBAL TEXT SCALING
------------------------------------------ */
+/* GLOBAL TEXT SCALING */
 
 :root[data-text-size="standard"] {
   font-size: 100%;
@@ -34,9 +54,7 @@ body {
   font-size: 125%;
 }
 
-/* -----------------------------------------
-   THEME PREFERENCES
------------------------------------------ */
+/* THEME PREFERENCES */
 
 :root[data-theme="dark"] {
   color-scheme: dark;
@@ -46,9 +64,7 @@ body {
   color-scheme: light;
 }
 
-/* -----------------------------------------
-   HIGH CONTRAST
------------------------------------------ */
+/* HIGH CONTRAST */
 
 :root[data-high-contrast="true"] {
   --astra-contrast-border: #ffffff;
@@ -67,9 +83,7 @@ body {
   outline-offset: 3px;
 }
 
-/* -----------------------------------------
-   REDUCED MOTION
------------------------------------------ */
+/* REDUCED MOTION */
 
 :root[data-reduced-motion="true"] *,
 :root[data-reduced-motion="true"] *::before,
@@ -80,9 +94,7 @@ body {
   transition-duration: 0.01ms !important;
 }
 
-/* -----------------------------------------
-   ENHANCED KEYBOARD FOCUS
------------------------------------------ */
+/* ENHANCED KEYBOARD FOCUS */
 
 :root[data-enhanced-focus="true"] :focus-visible {
   outline: 3px solid #22d3ee !important;

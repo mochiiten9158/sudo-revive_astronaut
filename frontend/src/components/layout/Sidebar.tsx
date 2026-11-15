@@ -1,5 +1,7 @@
 
 import { useEffect, useState } from "react";
+import logo from "../../assets/logo_with_words.png";
+
 import {
   LayoutDashboard,
   ChartNoAxesCombined,
@@ -567,11 +569,20 @@ export default function Sidebar({ currentPath, onNavigate }: SidebarProps) {
   }, [selectedMissionDay]);
 
   return (
-    <aside className="flex min-h-screen w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900 p-5">
-      <div className="mb-10">
-        <h1 className="text-2xl font-bold tracking-wide text-cyan-400">ASTRA</h1>
-        <p className="mt-1 text-xs text-slate-500">{t("sidebar.subtitle")}</p>
-      </div>
+      <aside className="flex min-h-screen w-72 shrink-0 flex-col border-r border-[#1b2b48] bg-[#080f22] p-5">
+        <div className="mb-8">
+          <div className="flex w-full items-center justify-start">
+            <img
+              src={logo}
+              alt="ASTRA"
+              className="block h-auto w-full max-w-[245px] object-contain object-left"
+            />
+          </div>
+
+          <p className="mt-3 text-xs tracking-wide text-slate-400">
+            {t("sidebar.subtitle")}
+          </p>
+        </div>
 
       <nav className="space-y-2" aria-label="Main navigation">
         {navigation.map((item) => {

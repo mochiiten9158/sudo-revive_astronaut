@@ -74,20 +74,22 @@
 
 .welcome-content {
   z-index: 1;
-  width: min(90%, 650px);
+  width: min(92%, 800px);
   text-align: center;
   display: flex;
   align-items: center;
   flex-direction: column;
-  gap: 15px;
-  padding: 100px 0 80px;
+  gap: 8px;
+  padding: 35px 0 25px;
 }
 
 .astra-logo {
-  width: clamp(110px, 18vw, 190px);
-  max-height: 190px;
+  width: clamp(280px, 38vw, 440px);
+  height: auto;
+  max-height: 300px;
   object-fit: contain;
-  filter: drop-shadow(0 0 20px rgba(90, 180, 255, 0.35));
+  filter: drop-shadow(0 0 24px rgba(90, 180, 255, 0.45));
+  margin-bottom: -90px;
 }
 
 .welcome-content h1 {
@@ -100,6 +102,7 @@
 .welcome-content h2 {
   font-size: clamp(1.2rem, 3vw, 1.8rem);
   margin: 0;
+  margin-top:-4px;
 }
 
 .welcome-content p {
@@ -329,6 +332,6 @@ input:focus-visible {
   }
 
   .welcome-content {
-    padding-top: 120px;
+    padding: 70px 0 25px;
   }
 }
