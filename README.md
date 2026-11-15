@@ -240,3 +240,5 @@ Preference state is shared across the application and persisted in browser local
 ## Team and acknowledgements
 
 ASTRA was developed for the NASA Space Apps Challenge. The project explores how visualization, longitudinal health data, individual baselines, and evidence-linked context can be combined in an astronaut-facing health monitoring prototype.
+
+Contributors: Kaya Sharma, Angelie Molhem, Alaa Hussein, Zoey Paige Rodriguez, Anna Kavtaradze
